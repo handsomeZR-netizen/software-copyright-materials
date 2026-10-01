@@ -1,0 +1,36 @@
+{
+  "software_name": "天平实验训练示例",
+  "software_version": "V1.0",
+  "copyright_owner": "示例著作权人",
+  "project_root": "code",
+  "output_dir": "../materials",
+  "development_date": "2026 年 1 月 1 日",
+  "publication_status": "",
+  "rights_confirmed": false,
+  "source_files": [
+    "shared/types.ts",
+    "server/app.ts",
+    "server/engine.ts",
+    "server/index.ts",
+    "server/storage.ts",
+    "src/main.tsx",
+    "src/style.css",
+    "index.html",
+    "vite.config.ts",
+    "scripts/start.ps1",
+    "scripts/stop.ps1"
+  ],
+  "package_files": [
+    "package.json",
+    "package-lock.json",
+    "tsconfig.json",
+    "README.md",
+    "启动.cmd",
+    "停止.cmd",
+    "安装依赖.cmd",
+    "tests/engine.test.ts",
+    "tests/server.test.ts",
+    "第三方许可说明.md"
+  ],
+  "stale_terms": []
+}

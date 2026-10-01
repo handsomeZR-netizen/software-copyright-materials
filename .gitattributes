@@ -1,0 +1,5 @@
+# Preserve exact bytes so deposited source SHA-256 survives checkout on every OS.
+* -text
+*.pdf binary
+*.png binary
+*.ttf binary

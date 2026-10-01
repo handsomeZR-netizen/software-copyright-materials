@@ -1,0 +1,17 @@
+\documentclass[UTF8,fontset=windows]{ctexart}
+\usepackage[a4paper,left=14mm,right=14mm,top=20mm,bottom=18mm,headheight=14pt]{geometry}
+\usepackage{fancyhdr}
+\usepackage{fvextra}
+\usepackage{xcolor}
+\setmonofont{DejaVuSansMono.ttf}[Path=fonts/]
+\setCJKmonofont{SimSun}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small @@software_name@@ @@software_version@@}
+\fancyhead[R]{\small 第 \thepage 页}
+\fancyfoot[L]{\small 著作权人：@@copyright_owner@@}
+\fancyfoot[R]{\small 源程序鉴别材料}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\setlength{\parindent}{0pt}
+\begin{document}

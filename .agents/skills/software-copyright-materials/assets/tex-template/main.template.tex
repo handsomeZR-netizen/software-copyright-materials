@@ -1,0 +1,91 @@
+\documentclass[UTF8,fontset=windows,zihao=-4]{ctexart}
+
+\usepackage[a4paper,left=22mm,right=22mm,top=24mm,bottom=22mm,headheight=18pt]{geometry}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{setspace}
+\usepackage{xcolor}
+
+\graphicspath{{figures/}}
+\hypersetup{hidelinks}
+\captionsetup{font=small,labelfont=bf}
+\setstretch{1.35}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0.2em}
+\setlist{nosep,leftmargin=2.2em}
+\renewcommand{\arraystretch}{1.25}
+
+\newcommand{\softwareName}{@@software_name@@}
+\newcommand{\softwareVersion}{@@software_version@@}
+\newcommand{\copyrightOwner}{@@copyright_owner@@}
+
+\newcommand{\menu}[1]{\textbf{#1}}
+\newcommand{\api}[1]{\nolinkurl{#1}}
+\newcommand{\redblank}[1]{{\color{red}\underline{\hspace{#1}}}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\softwareName\ \softwareVersion}
+\fancyhead[R]{第 \thepage 页}
+\fancyfoot[L]{著作权人：\copyrightOwner}
+\fancyfoot[R]{使用说明书}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{28mm}
+  {\zihao{1}\bfseries \softwareName\par}
+  \vspace{8mm}
+  {\zihao{2}\bfseries \softwareVersion\ 使用说明书\par}
+  \vspace{18mm}
+  {\zihao{4} 计算机软件著作权登记文档鉴别材料\par}
+  \vfill
+  \begin{tabular}{>{\bfseries}p{36mm}p{86mm}}
+    软件全称 & @@software_name@@ \\
+    软件版本 & \softwareVersion \\
+    开发完成日期 & @@development_date@@ \\
+    文档类型 & 使用说明书 \\
+    适用对象 & @@audience@@ \\
+  \end{tabular}
+  \vfill
+  {\zihao{-4} 本说明书适用于 \softwareName\ \softwareVersion，说明软件功能组成、运行环境、操作流程、主要界面和数据接口。\par}
+\end{titlepage}
+
+\begingroup
+\small
+\setstretch{1}
+\setlength{\parskip}{0pt}
+\tableofcontents
+\endgroup
+\clearpage
+
+
+% Replace every pending paragraph with facts verified against the NEW project's real code and screenshots.
+\section{软件概述}
+待编写：研发目的、实际功能、使用对象和适用范围。
+\section{运行环境与安装启动}
+待编写：操作系统、运行时、依赖、启动命令及停止、备份方法。
+\section{主要界面与操作流程}
+待编写：实机截图、逐步操作、输入、反馈及结果。截图放入figures目录。
+% Example syntax (uncomment only after capturing the real screen):
+% \begin{figure}[!htbp]\centering
+% \includegraphics[width=0.95\linewidth]{figures/01-home.png}
+% \caption{实际软件主界面}\end{figure}
+\section{结果查询与数据导出}
+待编写：仅描述真实实现的报告、记录、导出或查询功能。
+\section{异常处理及常见问题}
+待编写：真实前置条件、失败提示、纠错步骤和边界。
+\section{数据保存与软件结构}
+待编写：存储、备份、访问范围以及与当前版本一致的软件结构。
+\end{document}

@@ -1,0 +1,594 @@
+[
+  {
+    "id": "demo-session-001",
+    "label": "匿名示例规范称量",
+    "source": "demo",
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:10:00.000Z",
+    "finishedAt": "2026-01-01T00:10:00.000Z",
+    "status": "finished",
+    "checked": true,
+    "calibrated": true,
+    "rider": 0,
+    "nut": 0,
+    "objectSide": "box",
+    "objectMass": 374,
+    "weights": [],
+    "tool": "tweezers",
+    "steps": [
+      {
+        "name": "检查实验器材",
+        "max": 10,
+        "passed": true,
+        "score": 10
+      },
+      {
+        "name": "游码归零",
+        "max": 10,
+        "passed": true,
+        "score": 10
+      },
+      {
+        "name": "空载调平",
+        "max": 15,
+        "passed": true,
+        "score": 15
+      },
+      {
+        "name": "左盘放置物体",
+        "max": 15,
+        "passed": true,
+        "score": 15
+      },
+      {
+        "name": "由大到小添加砝码",
+        "max": 20,
+        "passed": true,
+        "score": 20
+      },
+      {
+        "name": "游码微调平衡",
+        "max": 10,
+        "passed": true,
+        "score": 10
+      },
+      {
+        "name": "读取并记录质量",
+        "max": 10,
+        "passed": true,
+        "score": 10
+      },
+      {
+        "name": "整理器材归位",
+        "max": 10,
+        "passed": true,
+        "score": 10
+      }
+    ],
+    "events": [
+      {
+        "at": "2026-01-01T00:00:00.000Z",
+        "action": "check",
+        "message": "器材检查完成：天平、物体、砝码、镊子齐全。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:01.000Z",
+        "action": "rider",
+        "message": "游码已移至 0.0 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:02.000Z",
+        "action": "nut",
+        "message": "平衡螺母设置为 1。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:03.000Z",
+        "action": "nut",
+        "message": "空载调平完成。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:04.000Z",
+        "action": "object",
+        "message": "应左物右码，请将物体放在左盘。",
+        "violation": true
+      },
+      {
+        "at": "2026-01-01T00:00:05.000Z",
+        "action": "object",
+        "message": "物体已放在左盘。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:06.000Z",
+        "action": "addWeight:200:valid",
+        "message": "已添加 20.0 g 砝码。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:07.000Z",
+        "action": "addWeight:100:valid",
+        "message": "已添加 10.0 g 砝码。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:08.000Z",
+        "action": "addWeight:50:valid",
+        "message": "已添加 5.0 g 砝码。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:09.000Z",
+        "action": "rider",
+        "message": "游码已移至 0.1 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:10.000Z",
+        "action": "rider",
+        "message": "游码已移至 0.2 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:11.000Z",
+        "action": "rider",
+        "message": "游码已移至 0.3 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:12.000Z",
+        "action": "rider",
+        "message": "游码已移至 0.4 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:13.000Z",
+        "action": "rider",
+        "message": "游码已移至 0.5 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:14.000Z",
+        "action": "rider",
+        "message": "游码已移至 0.6 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:15.000Z",
+        "action": "rider",
+        "message": "游码已移至 0.7 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:16.000Z",
+        "action": "rider",
+        "message": "游码已移至 0.8 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:17.000Z",
+        "action": "rider",
+        "message": "游码已移至 0.9 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:18.000Z",
+        "action": "rider",
+        "message": "游码已移至 1.0 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:19.000Z",
+        "action": "rider",
+        "message": "游码已移至 1.1 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:20.000Z",
+        "action": "rider",
+        "message": "游码已移至 1.2 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:21.000Z",
+        "action": "rider",
+        "message": "游码已移至 1.3 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:22.000Z",
+        "action": "rider",
+        "message": "游码已移至 1.4 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:23.000Z",
+        "action": "rider",
+        "message": "游码已移至 1.5 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:24.000Z",
+        "action": "rider",
+        "message": "游码已移至 1.6 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:25.000Z",
+        "action": "rider",
+        "message": "游码已移至 1.7 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:26.000Z",
+        "action": "rider",
+        "message": "游码已移至 1.8 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:27.000Z",
+        "action": "rider",
+        "message": "游码已移至 1.9 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:28.000Z",
+        "action": "rider",
+        "message": "游码已移至 2.0 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:29.000Z",
+        "action": "rider",
+        "message": "游码已移至 2.1 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:30.000Z",
+        "action": "rider",
+        "message": "游码已移至 2.2 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:31.000Z",
+        "action": "rider",
+        "message": "游码已移至 2.3 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:32.000Z",
+        "action": "rider",
+        "message": "游码微调完成，天平平衡。请读取右盘砝码与游码的合计质量。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:33.000Z",
+        "action": "read",
+        "message": "测量结果 37.4 g，记录成功。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:34.000Z",
+        "action": "tidy",
+        "message": "物体和砝码已归位、游码已归零，实验完成。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-01T00:00:35.000Z",
+        "action": "finish",
+        "message": "实验已归档，练习完成得分 100 / 100。",
+        "violation": false
+      }
+    ],
+    "reading": 374,
+    "score": 100,
+    "feedback": "实验已归档，练习完成得分 100 / 100。",
+    "balanced": true,
+    "difference": 0,
+    "measurement": {
+      "weightTotal": 350,
+      "rider": 24,
+      "value": 374,
+      "at": "2026-01-01T00:09:00.000Z"
+    }
+  },
+  {
+    "id": "demo-session-002",
+    "label": "匿名演示练习",
+    "source": "demo",
+    "createdAt": "2026-01-02T00:00:00.000Z",
+    "updatedAt": "2026-01-02T00:10:00.000Z",
+    "finishedAt": "2026-01-02T00:10:00.000Z",
+    "status": "finished",
+    "checked": true,
+    "calibrated": true,
+    "rider": 0,
+    "nut": 0,
+    "objectSide": "box",
+    "objectMass": 374,
+    "weights": [],
+    "tool": "tweezers",
+    "steps": [
+      {
+        "name": "检查实验器材",
+        "max": 10,
+        "passed": true,
+        "score": 10
+      },
+      {
+        "name": "游码归零",
+        "max": 10,
+        "passed": true,
+        "score": 10
+      },
+      {
+        "name": "空载调平",
+        "max": 15,
+        "passed": true,
+        "score": 15
+      },
+      {
+        "name": "左盘放置物体",
+        "max": 15,
+        "passed": true,
+        "score": 15
+      },
+      {
+        "name": "由大到小添加砝码",
+        "max": 20,
+        "passed": true,
+        "score": 20
+      },
+      {
+        "name": "游码微调平衡",
+        "max": 10,
+        "passed": true,
+        "score": 10
+      },
+      {
+        "name": "读取并记录质量",
+        "max": 10,
+        "passed": true,
+        "score": 10
+      },
+      {
+        "name": "整理器材归位",
+        "max": 10,
+        "passed": true,
+        "score": 10
+      }
+    ],
+    "events": [
+      {
+        "at": "2026-01-02T00:00:00.000Z",
+        "action": "check",
+        "message": "器材检查完成：天平、物体、砝码、镊子齐全。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:01.000Z",
+        "action": "rider",
+        "message": "游码已移至 0.0 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:02.000Z",
+        "action": "nut",
+        "message": "平衡螺母设置为 1。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:03.000Z",
+        "action": "nut",
+        "message": "空载调平完成。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:04.000Z",
+        "action": "object",
+        "message": "应左物右码，请将物体放在左盘。",
+        "violation": true
+      },
+      {
+        "at": "2026-01-02T00:00:05.000Z",
+        "action": "object",
+        "message": "物体已放在左盘。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:06.000Z",
+        "action": "addWeight:200:valid",
+        "message": "已添加 20.0 g 砝码。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:07.000Z",
+        "action": "addWeight:100:valid",
+        "message": "已添加 10.0 g 砝码。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:08.000Z",
+        "action": "addWeight:50:valid",
+        "message": "已添加 5.0 g 砝码。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:09.000Z",
+        "action": "rider",
+        "message": "游码已移至 0.1 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:10.000Z",
+        "action": "rider",
+        "message": "游码已移至 0.2 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:11.000Z",
+        "action": "rider",
+        "message": "游码已移至 0.3 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:12.000Z",
+        "action": "rider",
+        "message": "游码已移至 0.4 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:13.000Z",
+        "action": "rider",
+        "message": "游码已移至 0.5 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:14.000Z",
+        "action": "rider",
+        "message": "游码已移至 0.6 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:15.000Z",
+        "action": "rider",
+        "message": "游码已移至 0.7 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:16.000Z",
+        "action": "rider",
+        "message": "游码已移至 0.8 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:17.000Z",
+        "action": "rider",
+        "message": "游码已移至 0.9 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:18.000Z",
+        "action": "rider",
+        "message": "游码已移至 1.0 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:19.000Z",
+        "action": "rider",
+        "message": "游码已移至 1.1 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:20.000Z",
+        "action": "rider",
+        "message": "游码已移至 1.2 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:21.000Z",
+        "action": "rider",
+        "message": "游码已移至 1.3 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:22.000Z",
+        "action": "rider",
+        "message": "游码已移至 1.4 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:23.000Z",
+        "action": "rider",
+        "message": "游码已移至 1.5 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:24.000Z",
+        "action": "rider",
+        "message": "游码已移至 1.6 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:25.000Z",
+        "action": "rider",
+        "message": "游码已移至 1.7 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:26.000Z",
+        "action": "rider",
+        "message": "游码已移至 1.8 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:27.000Z",
+        "action": "rider",
+        "message": "游码已移至 1.9 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:28.000Z",
+        "action": "rider",
+        "message": "游码已移至 2.0 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:29.000Z",
+        "action": "rider",
+        "message": "游码已移至 2.1 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:30.000Z",
+        "action": "rider",
+        "message": "游码已移至 2.2 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:31.000Z",
+        "action": "rider",
+        "message": "游码已移至 2.3 g。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:32.000Z",
+        "action": "rider",
+        "message": "游码微调完成，天平平衡。请读取右盘砝码与游码的合计质量。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:33.000Z",
+        "action": "read",
+        "message": "测量结果 37.4 g，记录成功。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:34.000Z",
+        "action": "tidy",
+        "message": "物体和砝码已归位、游码已归零，实验完成。",
+        "violation": false
+      },
+      {
+        "at": "2026-01-02T00:00:35.000Z",
+        "action": "finish",
+        "message": "实验已归档，练习完成得分 100 / 100。",
+        "violation": false
+      }
+    ],
+    "reading": 374,
+    "score": 100,
+    "feedback": "实验已归档，练习完成得分 100 / 100。",
+    "balanced": true,
+    "difference": 0,
+    "measurement": {
+      "weightTotal": 350,
+      "rider": 24,
+      "value": 374,
+      "at": "2026-01-02T00:09:00.000Z"
+    }
+  }
+]

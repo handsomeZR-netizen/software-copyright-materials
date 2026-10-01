@@ -1,0 +1,85 @@
+{
+  "observed_date": "2026-10-01",
+  "basis": "用户提供的网页表单截图；后续以实际界面为准",
+  "count_method": "UTF-16 code units, matching typical browser string.length; actual portal counter takes precedence",
+  "fields": {
+    "software_name": {
+      "label": "软件全称",
+      "required": true
+    },
+    "short_name": {
+      "label": "软件简称",
+      "required": false
+    },
+    "version": {
+      "label": "版本号",
+      "required": true
+    },
+    "development_hardware": {
+      "label": "开发的硬件环境",
+      "max": 50,
+      "required": true
+    },
+    "runtime_hardware": {
+      "label": "运行的硬件环境",
+      "max": 50,
+      "required": true
+    },
+    "development_os": {
+      "label": "开发该软件的操作系统",
+      "max": 50,
+      "required": true
+    },
+    "development_tools": {
+      "label": "软件开发环境/开发工具",
+      "max": 50,
+      "required": true
+    },
+    "runtime_platform": {
+      "label": "该软件的运行平台/操作系统",
+      "max": 50,
+      "required": true
+    },
+    "runtime_support": {
+      "label": "软件运行支撑环境/支持软件",
+      "max": 50,
+      "required": true
+    },
+    "languages": {
+      "label": "编程语言",
+      "type": "list",
+      "required": true
+    },
+    "source_lines": {
+      "label": "源程序量",
+      "type": "positive_integer",
+      "required": true
+    },
+    "purpose": {
+      "label": "开发目的",
+      "max": 50,
+      "required": true
+    },
+    "industry": {
+      "label": "面向领域/行业",
+      "max": 50,
+      "required": true
+    },
+    "main_functions": {
+      "label": "软件的主要功能",
+      "min": 500,
+      "max": 1300,
+      "required": true
+    },
+    "technical_category": {
+      "label": "技术特点类别",
+      "type": "list",
+      "required": true
+    },
+    "technical_features": {
+      "label": "软件的技术特点文字",
+      "max": 100,
+      "required": true
+    }
+  }
+}

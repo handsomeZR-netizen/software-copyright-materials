@@ -1,0 +1,13 @@
+**/node_modules/
+**/__pycache__/
+**/build/
+**/qa/
+**/.runtime/
+**/dist/
+*.pyc
+*.log
+.env
+.env.*
+**/data/
+!examples/balance-lab/code/data/
+!examples/balance-lab/code/data/sessions.json

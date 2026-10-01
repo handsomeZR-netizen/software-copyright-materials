@@ -1,0 +1,4 @@
+interface:
+  display_name: "软著材料准备与网页填表"
+  short_description: "沿用TeX模板准备软著材料、校验源码并生成网页填表内容"
+  default_prompt: "使用 $software-copyright-materials 根据我的新项目准备软著材料及网页申请字段，并整理交付文件。"

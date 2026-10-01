@@ -1,0 +1,26 @@
+{
+  "software_name": "填写新的软件全称",
+  "software_version": "V1.0",
+  "copyright_owner": "填写真实著作权人，不能沿用旧项目人员",
+  "project_root": "../../新项目",
+  "output_dir": "软著材料准备包",
+  "development_date": "",
+  "publication_status": "",
+  "rights_confirmed": false,
+  "audience": "填写实际使用人员",
+  "source_files": [
+    "src/main.tsx",
+    "server/index.ts"
+  ],
+  "package_files": [
+    "package.json",
+    "package-lock.json",
+    "README.md"
+  ],
+  "source_lines_per_page": 50,
+  "source_font_size": 8,
+  "source_line_height": 10,
+  "merge_last_remainder": true,
+  "manual_front_pages_without_header": 1,
+  "stale_terms": []
+}
