@@ -15,7 +15,7 @@ description: 根据真实项目源码准备中国计算机软件著作权登记�
 
 ## 合作开发协议
 
-制作合作开发协议时，默认沿用 [DOCX 协议模板](assets/agreement-template/合作开发协议模板.docx) 的条款内容和格式，操作规则见 [协议模板使用](references/cooperation-agreement.md)。用户指定其他模板时以其指定为准。
+制作合作开发协议时，默认沿用 [DOCX 协议模板](assets/agreement-template/合作开发协议模板.docx) 的条款内容和格式，操作规则见 [协议模板使用](references/cooperation-agreement.md)。协议著作权归属写为各方共同享有，不设置份额或比例；收益安排由各方共同协商并书面确定。用户指定其他模板时以其指定为准。
 
 ## 核心约束
 
