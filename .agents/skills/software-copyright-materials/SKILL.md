@@ -13,6 +13,10 @@ description: 根据真实项目源码准备中国计算机软件著作权登记�
 - 填写网页申请或用户发来表单截图：读取[网页字段规则](references/web-form.md)和references/web-form-schema.json。优先更新已有申请信息填写清单.md，避免另造重复文件；用户只要归档时，不在回复重贴全部字段。截图是当次字段及限字依据，不能把2026年10月截图当作永久规则。
 - 整理交付：读取[文件整理](references/delivery-layout.md)。将代码、运行资源及启动说明完整保存为code.zip；软件材料包只展示当前两类PDF及填写Markdown，TeX主文件、配图和映射放子目录。历史和核验记录另存归档。
 
+## 合作开发协议
+
+制作合作开发协议时，默认沿用 [DOCX 协议模板](assets/agreement-template/合作开发协议模板.docx) 的条款内容和格式，操作规则见 [协议模板使用](references/cooperation-agreement.md)。用户指定其他模板时以其指定为准。
+
 ## 核心约束
 
 1. 用实现、实际运行截图和真实记录支撑说明书功能。不得把AI辅助开发误写成产品内置AI，也不得增加摄像头、识别模型、云服务等未实现功能。
