@@ -23,6 +23,11 @@ class WebFormTests(unittest.TestCase):
             self.assertFalse(check(data,self.schema)['passed'])
         self.values['short_name']='无'
         self.assertFalse(check(self.values,self.schema)['passed'])
+    def test_source_lines_must_match_stats(self):
+        self.assertTrue(check(self.values,self.schema,{'nonempty_source_lines':100})['passed'])
+        result=check(self.values,self.schema,{'nonempty_source_lines':2756})
+        self.assertFalse(result['passed'])
+        self.assertIn('source_lines',result['errors'][0])
     def test_browser_unicode_length(self):
         self.assertEqual(browser_length('中文A\U0001f600'),5)
 
