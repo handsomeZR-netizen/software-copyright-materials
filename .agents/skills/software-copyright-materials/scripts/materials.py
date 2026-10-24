@@ -12,10 +12,18 @@ import math
 import re
 import shutil
 import subprocess
+import unicodedata
 from zipfile import ZipFile, ZIP_DEFLATED
 
 KIT = Path(__file__).resolve().parents[1]
-EXCLUDED = {'.git', 'node_modules', 'dist', 'build', '.venv', '__pycache__', '.runtime', 'tmp'}
+# Deposit source must be original code; the runnable code.zip may also carry built output.
+SOURCE_EXCLUDED = {'.git', 'node_modules', 'dist', 'build', '.venv', '__pycache__', '.runtime', 'tmp'}
+PACKAGE_EXCLUDED = {'.git', 'node_modules', '.venv', '__pycache__', '.runtime', 'tmp'}
+BP_PER_MM = 72/25.4
+MONO_ADVANCE_EM = 0.602  # DejaVu Sans Mono glyph advance
+DELIVERY_MARKER = '.materials-generated'
+GEOMETRY_DEFAULTS = {'manual': {'top': 24, 'bottom': 22, 'left': 22, 'right': 22},
+                     'source': {'top': 20, 'bottom': 18, 'left': 14, 'right': 14}}
 
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -43,9 +51,13 @@ def read_config(path):
     cfg['_root'], cfg['_out'] = root, out
     return cfg
 
-def project_file(cfg, relative):
+def excluded_dirs(cfg, kind):
+    base = SOURCE_EXCLUDED if kind == 'source' else PACKAGE_EXCLUDED
+    return base - set(cfg.get('allow_excluded_dirs', []))
+
+def project_file(cfg, relative, kind='source'):
     rel = Path(relative)
-    if rel.is_absolute() or any(p in EXCLUDED for p in rel.parts):
+    if rel.is_absolute() or any(p in excluded_dirs(cfg, kind) for p in rel.parts):
         raise ValueError('Use explicit original source/config paths, not generated/dependency files: '+str(rel))
     root = cfg['_root']
     path = (root / rel).resolve()
@@ -53,24 +65,77 @@ def project_file(cfg, relative):
         raise ValueError('File missing or outside project root: '+str(rel))
     return path
 
-def source_pages(rows, per_page=50, merge_remainder=True):
+def package_paths(cfg):
+    """Expand package_files entries: plain files, directories (recursive) or glob patterns."""
+    root, skipped, found = cfg['_root'], excluded_dirs(cfg, 'package'), set()
+    for entry in cfg.get('package_files', []):
+        if any(c in entry for c in '*?[') or (root / entry).is_dir():
+            if Path(entry).is_absolute() or '..' in Path(entry).parts:
+                raise ValueError('Package pattern must stay inside project root: '+entry)
+            pattern = entry if any(c in entry for c in '*?[') else entry.rstrip('/\\')+'/**/*'
+            if pattern.endswith('**'):
+                pattern += '/*'  # before Python 3.13 a trailing ** matches directories only
+            matches = [p for p in root.glob(pattern) if p.is_file()
+                       and not set(p.relative_to(root).parts) & skipped and p.suffix != '.log']
+            if not matches:
+                raise ValueError('package_files entry matched no files (build output missing?): '+entry)
+            found.update(project_file(cfg, p.relative_to(root), 'package') for p in matches)
+        else:
+            found.add(project_file(cfg, entry, 'package'))
+    return found
+
+def tex_geometry(tex_path, kind):
+    """Margins in mm from the TeX geometry options, falling back to the template defaults."""
+    margins = dict(GEOMETRY_DEFAULTS[kind])
+    if tex_path.is_file():
+        match = re.search(r'\\usepackage\[([^\]]*)\]\{geometry\}', tex_path.read_text(encoding='utf-8'))
+        for key, value in re.findall(r'(top|bottom|left|right)\s*=\s*([\d.]+)\s*mm', match.group(1) if match else ''):
+            margins[key] = float(value)
+    return margins
+
+def page_capacity(cfg):
+    """Rows that safely fit on one source page and monospace columns per row, from geometry and font."""
+    margins = tex_geometry(KIT / 'assets/tex-template/source.template.tex', 'source')
+    size = float(cfg.get('source_font_size', 8))
+    leading = float(cfg.get('source_line_height', 10))
+    text_height = (297-margins['top']-margins['bottom'])*BP_PER_MM
+    text_width = (210-margins['left']-margins['right'])*BP_PER_MM
+    # Keep one row of headroom; at 8/10pt this gives 72 while 75 measured rows still fit.
+    return int(cfg.get('source_page_capacity', math.floor(text_height/leading)-1)), int(text_width/(size*MONO_ADVANCE_EM))
+
+def visual_rows(line, columns):
+    width = sum(2 if unicodedata.east_asian_width(c) in 'WF' else 1 for c in line)
+    return max(1, math.ceil(width/columns))
+
+def source_pages(rows, per_page=50, merge_remainder=True, capacity=72, columns=None):
     if per_page < 50:
         raise ValueError('source_lines_per_page must be >=50')
     if not rows:
         raise ValueError('No non-empty real source lines were found')
     pages = [rows[i:i+per_page] for i in range(0, len(rows), per_page)]
-    if merge_remainder and len(pages) > 1 and len(pages[-1]) < 50:
+    cost = (lambda page: sum(visual_rows(r, columns) for r in page)) if columns else len
+    # Merge a short tail only when the combined page still fits; otherwise keep a short final page.
+    if merge_remainder and len(pages) > 1 and len(pages[-1]) < 50 and cost(pages[-2])+cost(pages[-1]) <= capacity:
         pages[-2].extend(pages.pop())
     return pages
 
 def deposit_selection(count):
     return list(range(count)) if count <= 60 else list(range(30))+list(range(count-30, count))
 
+def font_options(template, cfg):
+    """ctex fontset (windows/mac/fandol/ubuntu) and CJK mono font; Windows defaults match the original templates."""
+    for key, default in [('ctex_fontset', 'windows'), ('cjk_mono_font', 'SimSun')]:
+        value = str(cfg.get(key, default))
+        if not re.fullmatch(r'[A-Za-z0-9 _-]+', value):
+            raise ValueError('Invalid '+key+': '+value)
+        template = template.replace('@@'+key+'@@', value)
+    return template
+
 def init(cfg):
     out = cfg['_out']
     folder = out / 'manual-tex'
     folder.mkdir(parents=True, exist_ok=True)
-    template = (KIT / 'assets/tex-template/main.template.tex').read_text(encoding='utf-8')
+    template = font_options((KIT / 'assets/tex-template/main.template.tex').read_text(encoding='utf-8'), cfg)
     for key in ['software_name', 'software_version', 'copyright_owner', 'audience']:
         template = template.replace('@@'+key+'@@', tex_escape(cfg.get(key, '待核实')))
     date = cfg.get('development_date', '')
@@ -104,15 +169,19 @@ def generate_source(cfg):
                       'sha256': digest(path), 'lines': len(lines), 'nonempty_lines': len(useful),
                       'deposit_line_start': start, 'deposit_line_end': len(rows),
                       'source_line_numbers': [i for i, _ in useful]})
-    pages = source_pages(rows, cfg.get('source_lines_per_page', 50), cfg.get('merge_last_remainder', True))
-    selected = deposit_selection(len(pages))
-    preamble = (KIT / 'assets/tex-template/source.template.tex').read_text(encoding='utf-8')
-    for key in ['software_name', 'software_version', 'copyright_owner']:
-        preamble = preamble.replace('@@'+key+'@@', tex_escape(cfg[key]))
     size = float(cfg.get('source_font_size', 8))
     leading = float(cfg.get('source_line_height', 10))
     if not 6 <= size <= 12 or not size <= leading <= 16:
         raise ValueError('Invalid source font/leading; choose legible values and verify actual pagination')
+    capacity, columns = page_capacity(cfg)
+    per_page = cfg.get('source_lines_per_page', 50)
+    if per_page > capacity:
+        raise ValueError('source_lines_per_page exceeds the '+str(capacity)+' rows that fit one page; lower it or the line height')
+    pages = source_pages(rows, per_page, cfg.get('merge_last_remainder', True), capacity, columns)
+    selected = deposit_selection(len(pages))
+    preamble = font_options((KIT / 'assets/tex-template/source.template.tex').read_text(encoding='utf-8'), cfg)
+    for key in ['software_name', 'software_version', 'copyright_owner']:
+        preamble = preamble.replace('@@'+key+'@@', tex_escape(cfg[key]))
     body, ranges = [], []
     for page in selected:
         first = sum(len(chunk) for chunk in pages[:page])+1
@@ -125,9 +194,22 @@ def generate_source(cfg):
              'nonempty_source_lines': len(rows), 'full_pages': len(pages), 'submitted_pages': len(selected),
              'selected_pages': [x+1 for x in selected],
              'page_source_line_counts': [len(pages[x]) for x in selected], 'page_line_ranges': ranges,
+             'page_capacity_rows': capacity,
+             'pages_at_overflow_risk': [x+1 for x in selected if sum(visual_rows(r, columns) for r in pages[x]) > capacity],
              'note': 'Long lines wrap without inflating source line counts; blank lines omitted, comments preserved.'}
+    if len(pages[-1]) < 50 and len(pages) > 1:
+        stats['note'] += ' The final page keeps a short real tail because merging it would overflow the page.'
     write_json(out / '源码清单与统计.json', stats)
     return folder
+
+def layout_failures(log, tolerance):
+    """Missing glyphs always fail; overfull boxes fail only beyond the visible tolerance."""
+    failures = []
+    for line in log.splitlines():
+        overfull = re.search(r'Overfull \\[hv]box \(([\d.]+)pt too', line)
+        if 'Missing character:' in line or (overfull and float(overfull.group(1)) > tolerance):
+            failures.append(line)
+    return failures
 
 def compile_tex(cfg, folder, target):
     engine = cfg.get('xelatex') or shutil.which('xelatex')
@@ -156,7 +238,7 @@ def compile_tex(cfg, folder, target):
     if not converged:
         raise RuntimeError('TOC/cross references did not stabilize after 5 passes; inspect the TeX log')
     log = (build / 'main.log').read_text(encoding='utf-8', errors='replace')
-    failures = [line for line in log.splitlines() if 'Missing character:' in line or 'Overfull' in line]
+    failures = layout_failures(log, float(cfg.get('overfull_tolerance_pt', 1.0)))
     if failures:
         raise RuntimeError('Fix missing glyphs or overflowing text before delivery:\n'+'\n'.join(failures[:15]))
     shutil.copy2(build / 'main.pdf', target)
@@ -211,15 +293,20 @@ def verify(cfg):
         folder.mkdir(parents=True, exist_ok=True)
         counts = []
         if kind == 'source' and len(doc) != stats['submitted_pages']:
-            issues.append('Actual source page count differs from plan; reduce line height or disable remainder merge and rebuild')
+            issues.append('Actual source page count differs from plan; reduce line height or lower source_page_capacity and rebuild')
+        # Header, body and footer zones follow the TeX geometry so changed margins do not cause false reports.
+        margins = tex_geometry(out / (kind+'-tex') / 'main.tex', kind)
+        body_top = margins['top']*BP_PER_MM - 3
+        body_bottom = 841.89 - margins['bottom']*BP_PER_MM
+        left_margin = margins['left']*BP_PER_MM
         for index, page in enumerate(doc):
             label = name+':'+str(index+1)
             if abs(page.rect.width-595.28)>2 or abs(page.rect.height-841.89)>2:
                 issues.append(label+' is not A4 portrait')
             text = page.get_text()
             normalized = re.sub(r'\s+', '', text)
-            header = ''.join(b[4] for b in page.get_text('blocks') if b[1]<65)
-            footer = ''.join(b[4] for b in page.get_text('blocks') if b[1]>790)
+            header = ''.join(b[4] for b in page.get_text('blocks') if b[1]<body_top)
+            footer = ''.join(b[4] for b in page.get_text('blocks') if b[1]>body_bottom+5)
             has_header = kind == 'source' or index >= cfg.get('manual_front_pages_without_header', 1)
             if has_header:
                 if re.sub(r'\s+', '', title) not in re.sub(r'\s+', '', header):
@@ -247,10 +334,11 @@ def verify(cfg):
                         if x0 < -1 or y0 < -1 or x1 > page.rect.width+1 or y1 > page.rect.height+1:
                             issues.append(label+' text outside physical page')
                         # Keep body text away from the header/footer; section of either excludes it.
-                        if 55 < y0 < 790 and y1 > 787:
+                        if body_top < y0 < body_bottom+5 and y1 > body_bottom+6:
                             issues.append(label+' body text enters footer rule region')
             if kind == 'source':
-                numbers = [int(w[4]) for w in page.get_text('words') if w[0]<39 and w[4].isdigit() and 55<w[1]<780]
+                numbers = [int(w[4]) for w in page.get_text('words')
+                           if w[0]<left_margin-0.5 and w[4].isdigit() and body_top<w[1]<body_bottom+5]
                 target = list(range(*[stats['page_line_ranges'][index][0], stats['page_line_ranges'][index][1]+1])) if index < len(stats['page_line_ranges']) else []
                 counts.append(len(numbers))
                 if numbers != target:
@@ -271,7 +359,7 @@ def verify(cfg):
                             issues.append(label+' TOC printed page differs from real destination: '+str(link.get('nameddest')))
                 if index > 0 and index != len(doc)-1 and not is_contents and not page.get_images():
                     rows = {round(line['bbox'][1]) for block in page.get_text('dict')['blocks'] if block['type']==0
-                            for line in block['lines'] if 65<line['bbox'][1]<780}
+                            for line in block['lines'] if body_top<line['bbox'][1]<body_bottom}
                     if len(rows)<30:
                         issues.append(label+' text-only non-final body page has fewer than 30 rows')
             page.get_pixmap(matrix=fitz.Matrix(1.5,1.5), alpha=False).save(folder/f'page-{index+1:03}.png')
@@ -294,14 +382,45 @@ def verify(cfg):
     print(json.dumps(report,ensure_ascii=False,indent=2))
     return report
 
+def copy_tree_files(source, target, skip=('build',)):
+    for path in sorted(source.rglob('*')):
+        rel = path.relative_to(source)
+        if path.is_file() and not set(rel.parts) & set(skip) and path.suffix not in {'.log','.aux','.out','.toc'}:
+            (target/rel).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(path, target/rel)
+
+def assemble_delivery(cfg, delivery):
+    """Lay out code.zip's sibling 软件材料包/ as described in references/delivery-layout.md."""
+    out = cfg['_out']
+    bundle = delivery/'软件材料包'
+    if bundle.exists():
+        shutil.rmtree(bundle)
+    bundle.mkdir(parents=True)
+    for name in ['使用说明书.pdf', '源程序鉴别材料.pdf', '使用说明书_鉴别选页.pdf', '申请信息填写清单.md']:
+        if (out/name).is_file():
+            shutil.copy2(out/name, bundle/name)
+    for kind in ['manual-tex', 'source-tex']:
+        copy_tree_files(out/kind, bundle/'可编辑原稿'/kind)
+    for name in ['源码清单与统计.json', '文档页序.json']:
+        if (out/name).is_file():
+            (bundle/'源码映射').mkdir(exist_ok=True)
+            shutil.copy2(out/name, bundle/'源码映射'/name)
+
 def package(cfg):
     out, root = cfg['_out'], cfg['_root']
     report = verify(cfg)
     if report['issues']:
         raise RuntimeError('Resolve verification issues before packaging')
-    files = sorted(set(project_file(cfg, rel) for rel in cfg['source_files']+cfg.get('package_files', [])))
+    delivery = (out/cfg.get('delivery_dir', '交付')).resolve()
+    if not delivery.is_relative_to(out):
+        raise ValueError('delivery_dir must stay inside output_dir')
+    if delivery.exists() and any(delivery.iterdir()) and not (delivery/DELIVERY_MARKER).exists():
+        raise FileExistsError('Existing delivery folder preserved; it was not generated by this script: '+str(delivery))
+    delivery.mkdir(parents=True, exist_ok=True)
+    (delivery/DELIVERY_MARKER).write_text('Regenerated by materials.py package; edit sources in output_dir instead.\n', encoding='utf-8')
+    files = sorted(set(project_file(cfg, rel) for rel in cfg['source_files']) | package_paths(cfg))
     records = [{'path':p.relative_to(root).as_posix(),'sha256':digest(p)} for p in files]
-    source_zip = out/'完整源码.zip'
+    source_zip = delivery/'code.zip'
     with ZipFile(source_zip,'w',ZIP_DEFLATED) as archive:
         for path in files:
             archive.write(path,path.relative_to(root).as_posix())
@@ -312,10 +431,13 @@ def package(cfg):
         for item in records:
             if hashlib.sha256(archive.read(item['path'])).hexdigest()!=item['sha256']:
                 raise RuntimeError('ZIP source hash mismatch')
-    # Complete material archive also contains TeX, images, provenance, review and source ZIP.
+    assemble_delivery(cfg, delivery)
+    # Complete material archive also contains TeX, images, provenance, review and code.zip;
+    # the 软件材料包 copy is left out because it duplicates files already archived.
+    bundle = delivery/'软件材料包'
     material_files = sorted(p for p in out.rglob('*') if p.is_file() and
-                            not set(p.relative_to(out).parts)&{'build','qa'} and p.name not in {'完整交付.zip','交付文件校验.json'}
-                            and p.suffix not in {'.log','.aux','.out','.toc'})
+                            not set(p.relative_to(out).parts)&{'build','qa'} and p.name not in {'完整交付.zip','交付文件校验.json',DELIVERY_MARKER}
+                            and not p.is_relative_to(bundle) and p.suffix not in {'.log','.aux','.out','.toc'})
     manifest = [{'path':p.relative_to(out).as_posix(),'sha256':digest(p)} for p in material_files]
     write_json(out/'交付文件校验.json',manifest)
     with ZipFile(out/'完整交付.zip','w',ZIP_DEFLATED) as archive:
@@ -327,7 +449,7 @@ def package(cfg):
         for item in manifest:
             if hashlib.sha256(archive.read(item['path'])).hexdigest()!=item['sha256']:
                 raise RuntimeError('Material ZIP hash mismatch: '+item['path'])
-    print(source_zip); print(out/'完整交付.zip')
+    print(source_zip); print(bundle); print(out/'完整交付.zip')
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description=__doc__)

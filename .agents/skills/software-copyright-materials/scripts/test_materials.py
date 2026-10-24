@@ -54,5 +54,45 @@ class MaterialsTests(unittest.TestCase):
             with self.assertRaises(ValueError):m.generate_source(cfg)
     def test_empty_source_refused(self):
         with self.assertRaises(ValueError):m.source_pages([])
+    def test_tail_merge_respects_page_capacity(self):
+        rows=[str(i) for i in range(190)]
+        self.assertEqual([len(x) for x in m.source_pages(rows)],[50,50,50,40])
+        self.assertEqual([len(x) for x in m.source_pages(rows,capacity=95)],[50,50,90])
+        self.assertEqual(m.page_capacity({}),(72,107))
+    def test_wrapped_lines_count_toward_capacity(self):
+        self.assertEqual(m.visual_rows('a'*107,107),1)
+        self.assertEqual(m.visual_rows('a'*108,107),2)
+        self.assertEqual(m.visual_rows('中'*54,107),2)
+        rows=['x'*200]*50+['y']*10
+        self.assertEqual([len(x) for x in m.source_pages(rows,columns=107)],[50,10])
+        self.assertEqual([len(x) for x in m.source_pages(['y']*60,columns=107)],[60])
+    def test_package_files_expand_built_output_but_not_dependencies(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            for rel in ['dist/assets/app.js','dist/index.html','tests/a.test.ts','node_modules/x/i.js','tests/run.log','build/gen.py']:
+                (root/rel).parent.mkdir(parents=True,exist_ok=True);(root/rel).write_text('x',encoding='utf-8')
+            cfg={'_root':root.resolve(),'package_files':['dist/**','tests']}
+            found={p.relative_to(cfg['_root']).as_posix() for p in m.package_paths(cfg)}
+            self.assertEqual(found,{'dist/assets/app.js','dist/index.html','tests/a.test.ts'})
+            with self.assertRaises(ValueError):m.project_file(cfg,'dist/index.html')
+            with self.assertRaises(ValueError):m.project_file(cfg,'build/gen.py')
+            cfg['allow_excluded_dirs']=['build']
+            self.assertTrue(m.project_file(cfg,'build/gen.py').is_file())
+            for bad in [['missing/**'],['node_modules/**'],['../**']]:
+                with self.subTest(bad=bad),self.assertRaises(ValueError):
+                    m.package_paths({'_root':cfg['_root'],'package_files':bad})
+    def test_overfull_tolerance_and_missing_glyphs(self):
+        log='Overfull \\hbox (0.4pt too wide) in paragraph\nOverfull \\hbox (3.2pt too wide) in paragraph\nOverfull \\vbox (1.5pt too high) has occurred\nMissing character: There is no X in font\n'
+        self.assertEqual(len(m.layout_failures(log,1.0)),3)
+        self.assertEqual(len(m.layout_failures(log,5.0)),1)
+    def test_fonts_and_geometry_are_configurable(self):
+        self.assertIn('fontset=windows',m.font_options('fontset=@@ctex_fontset@@',{}))
+        self.assertIn('{FandolFang}',m.font_options('{@@cjk_mono_font@@}',{'cjk_mono_font':'FandolFang'}))
+        with self.assertRaises(ValueError):m.font_options('x',{'ctex_fontset':'windows}\\input{x'})
+        with tempfile.TemporaryDirectory() as tmp:
+            tex=Path(tmp)/'main.tex'
+            tex.write_text('\\usepackage[a4paper,left=20mm,right=20mm,top=30mm,bottom=25mm]{geometry}',encoding='utf-8')
+            self.assertEqual(m.tex_geometry(tex,'manual'),{'top':30.0,'bottom':25.0,'left':20.0,'right':20.0})
+            self.assertEqual(m.tex_geometry(Path(tmp)/'none.tex','source'),m.GEOMETRY_DEFAULTS['source'])
 
 if __name__=='__main__':unittest.main()

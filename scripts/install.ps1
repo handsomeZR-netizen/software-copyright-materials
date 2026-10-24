@@ -1,16 +1,22 @@
 param(
   [string]$ProjectRoot,
   [switch]$Personal,
+  [switch]$Claude,
   [switch]$Force
 )
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
+# -Claude targets Claude Code (.claude/skills); otherwise Codex layout (.codex/skills, .agents/skills).
 if ($Personal) {
-  $skillsBase = if ($env:CODEX_HOME) { Join-Path $env:CODEX_HOME 'skills' } else { Join-Path $env:USERPROFILE '.codex/skills' }
+  if ($Claude) {
+    $skillsBase = if ($env:CLAUDE_CONFIG_DIR) { Join-Path $env:CLAUDE_CONFIG_DIR 'skills' } else { Join-Path $env:USERPROFILE '.claude/skills' }
+  } else {
+    $skillsBase = if ($env:CODEX_HOME) { Join-Path $env:CODEX_HOME 'skills' } else { Join-Path $env:USERPROFILE '.codex/skills' }
+  }
 } else {
   if (-not $ProjectRoot -or -not (Test-Path -LiteralPath $ProjectRoot -PathType Container)) { throw 'Provide an existing project directory with -ProjectRoot.' }
   $resolvedProject = (Resolve-Path -LiteralPath $ProjectRoot).Path
-  $skillsBase = Join-Path $resolvedProject '.agents/skills'
+  $skillsBase = Join-Path $resolvedProject $(if ($Claude) { '.claude/skills' } else { '.agents/skills' })
 }
 $destination = Join-Path $skillsBase 'software-copyright-materials'
 if ((Test-Path -LiteralPath $destination) -and -not $Force) { throw 'Existing skill preserved. Review it before passing -Force.' }

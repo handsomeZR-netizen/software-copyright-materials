@@ -8,8 +8,11 @@ SCHEMA = Path(__file__).resolve().parents[1] / 'references/web-form-schema.json'
 def browser_length(value):
     return len(value.encode('utf-16-le')) // 2
 
-def check(values, schema):
+def check(values, schema, stats=None):
     errors, counts = [], {}
+    if stats is not None and values.get('source_lines') != stats.get('nonempty_source_lines'):
+        errors.append('source_lines: ' + str(values.get('source_lines')) + ' differs from 源码清单与统计.json nonempty_source_lines '
+                      + str(stats.get('nonempty_source_lines')))
     for key, rule in schema['fields'].items():
         value = values.get(key)
         if value is None or value == '' or value == []:
@@ -42,8 +45,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--input', type=Path, required=True)
     parser.add_argument('--schema', type=Path, default=SCHEMA)
+    parser.add_argument('--stats', type=Path, help='源码清单与统计.json; source_lines must equal its nonempty_source_lines')
     args = parser.parse_args()
     result = check(json.loads(args.input.read_text(encoding='utf-8-sig')),
-                   json.loads(args.schema.read_text(encoding='utf-8-sig')))
+                   json.loads(args.schema.read_text(encoding='utf-8-sig')),
+                   json.loads(args.stats.read_text(encoding='utf-8-sig')) if args.stats else None)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     raise SystemExit(0 if result['passed'] else 1)

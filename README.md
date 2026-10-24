@@ -3,6 +3,7 @@
 ### 让一个已经做好的软件，也拥有一套认真准备的材料。
 
 [![Codex Skill](https://img.shields.io/badge/Codex-Skill-111827?style=flat-square)](.agents/skills/software-copyright-materials/SKILL.md)
+[![Claude Code Skill](https://img.shields.io/badge/Claude_Code-Skill-d97757?style=flat-square)](#几分钟开始)
 [![TeX to PDF](https://img.shields.io/badge/TeX-PDF-008080?style=flat-square)](examples/balance-lab/materials/使用说明书.pdf)
 [![Complete example](https://img.shields.io/badge/示例-完整且匿名-2563eb?style=flat-square)](examples/balance-lab/README.md)
 [![Windows](https://img.shields.io/badge/平台-Windows-0078d4?style=flat-square)](#几分钟开始)
@@ -46,7 +47,7 @@
 | 界面材料 | 7 张从匿名软件实际运行中采集的截图 |
 | 使用说明书 | 14 页 PDF，附 TeX 和配图；目录为一页 |
 | 源程序材料 | 55 页 PDF，来自 2,756 个非空源码行，附映射和哈希 |
-| 制作工具 | 8 项 Python 工具测试，附构建配置与网页字段示例 |
+| 制作工具 | 14 项 Python 工具测试，附构建配置与网页字段示例 |
 
 这些数字描述的是仓库里的示例，不是其他项目必须达到的页数或规模。示例名称、主体、日期和记录标识均为演示值，真实申请需要替换为实际项目事实。
 
@@ -91,11 +92,19 @@ cd software-copyright-materials
 
 安装位置为项目的 `.agents/skills/software-copyright-materials`，同时带上完整匿名示例。已有同名 Skill 时，先检查现有内容，再使用 `-Force` 更新；使用 `-Personal` 可安装到个人 skills 目录。
 
+使用 Claude Code 时加上 `-Claude`，安装到 `.claude/skills`（与 `-Personal` 合用时为 `~/.claude/skills`）：
+
+```powershell
+.\scripts\install.ps1 -Personal -Claude
+```
+
 在 Codex 新会话中调用：
 
 ```text
 使用 $software-copyright-materials 为我的新项目准备软著源码材料、TeX说明书和网页申请填写参考，并整理成code.zip和软件材料包。
 ```
+
+在 Claude Code 中可直接描述任务（如“帮我给这个项目准备软著材料”），或输入 `/software-copyright-materials`。
 
 提供项目路径、实际软件名称、版本、权利主体及已知日期。如果已有说明书模板或历史材料，也一并提供。Agent 会从实际实现开始，完成材料后复核；未知身份、权属及发表事项保留待补，不自动提交申请。
 
@@ -113,14 +122,14 @@ cd software-copyright-materials
 
 运行软件示例需要 Node.js 22.18 及以上。在 `examples/balance-lab/code` 中执行 `npm ci`、`npm test`、`npm run build`、`npm start`，然后访问 `http://localhost:3187`。数据为演示记录，正常运行不需要在线业务接口。
 
-命令行重建 PDF 需要 Python 3.10+、PyMuPDF、Pillow 和已有 XeLaTeX。当前模板使用 Windows 中文字体，其他系统需要替换字体并重新核验。内置 TeX 编辑器及编译器可用时优先使用，无需安装额外编辑器插件；命令行脚本用于批量制作及备用编译。
+命令行重建 PDF 需要 Python 3.10+、PyMuPDF、Pillow 和已有 XeLaTeX。模板默认使用 Windows 中文字体；其他系统在配置中设置 `ctex_fontset`（如 `mac`、`fandol`）和 `cjk_mono_font` 后重新核验。宿主自带 TeX 编辑器及编译器（如 Codex）时可优先使用；命令行脚本用于批量制作及备用编译。
 
 在仓库根目录执行：
 
 ```powershell
 python -m pip install -r .agents/skills/software-copyright-materials/scripts/requirements.txt
 python .agents/skills/software-copyright-materials/scripts/materials.py build --config examples/balance-lab/config.json
-python .agents/skills/software-copyright-materials/scripts/check_web_form.py --input examples/balance-lab/web-form.json
+python .agents/skills/software-copyright-materials/scripts/check_web_form.py --input examples/balance-lab/web-form.json --stats examples/balance-lab/materials/源码清单与统计.json
 python -m unittest discover -s .agents/skills/software-copyright-materials/scripts -p 'test_*.py' -v
 ```
 

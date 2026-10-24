@@ -15,12 +15,18 @@
   "package_files": [
     "package.json",
     "package-lock.json",
-    "README.md"
+    "README.md",
+    "tests",
+    "dist/**"
   ],
   "source_lines_per_page": 50,
   "source_font_size": 8,
   "source_line_height": 10,
   "merge_last_remainder": true,
+  "overfull_tolerance_pt": 1.0,
   "manual_front_pages_without_header": 1,
+  "ctex_fontset": "windows",
+  "cjk_mono_font": "SimSun",
+  "delivery_dir": "交付",
   "stale_terms": []
 }
