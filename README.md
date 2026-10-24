@@ -16,7 +16,7 @@
 | 源程序鉴别材料 PDF | 从原始文件抽取，附文件顺序、原始行号和 SHA-256 映射 |
 | 申请信息填写清单.md | 按网页表单字段顺序整理，脚本校验必填项、字数和源程序量 |
 | `code.zip` | 源码、配置、锁文件、测试、构建产物、启停脚本和逐文件校验 |
-| 合作开发协议 | 基于仓库内的 DOCX 模板填写（需要时） |
+| 合作开发协议 | 点名需要时，用 `agreement.py` 基于仓库内的 DOCX 模板生成 DOCX 和 PDF |
 
 ## 遵循的原则
 
@@ -84,6 +84,7 @@ python $kit/materials.py build   --config 配置.json   # 编译两份 PDF，并
 python $kit/materials.py verify  --config 配置.json   # 单独复核
 python $kit/materials.py package --config 配置.json   # 复核通过后打包
 python $kit/check_web_form.py --input 字段.json --stats 输出目录/源码清单与统计.json
+python $kit/agreement.py --config agreement.json --pdf   # 合作开发协议（需要时）
 ```
 
 `verify` 会检查源码哈希和行号顺序、A4 尺寸、页眉页脚、目录页码与实际跳转目标、残留的模板文字，并把每页渲染成图片放进 `qa/`，供人工目视检查。机器检查通过不代表排版没有问题，联系页（多页缩略图拼在一张图上）和关键页面仍然需要人看一遍。
@@ -160,7 +161,7 @@ python .agents/skills/software-copyright-materials/scripts/materials.py build --
 ├─ assets/
 │  ├─ tex-template/         说明书与源程序 TeX 模板、等宽字体
 │  └─ agreement-template/   合作开发协议 DOCX 模板
-└─ scripts/                 materials.py、check_web_form.py 及测试
+└─ scripts/                 materials.py、check_web_form.py、agreement.py 及测试
 examples/balance-lab/       完整匿名示例（代码 + 材料）
 scripts/
 ├─ install.ps1              安装脚本
