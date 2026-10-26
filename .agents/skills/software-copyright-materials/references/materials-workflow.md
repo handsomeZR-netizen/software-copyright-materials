@@ -4,7 +4,7 @@
 
 assets/tex-template为参数化TeX骨架及字体许可，模板事实全部替换为新项目数据。骨架存在待编写内容，完成真实正文与截图后才能验收。保留著作权人的真实归属，旧署名不套用。
 
-将config.example.json复制到新项目外或项目中，填写实际project_root、output_dir、名称/版本/主体、真实date及权属状态；按实际枚举source_files和package_files。开发日期、权属或发表未确认时保留待补，不妨碍技术准备。脚本需要Python3.10+、PyMuPDF和Pillow及既有XeLaTeX，设置xelatex字段可指定其绝对路径。
+先按delivery-layout.md建好“<软件全称> 版本/代码/”和“材料/制作底稿/”，把config.example.json复制为材料/制作底稿/config.json，填写名称/版本/主体、真实date及权属状态（布局符合默认时不写project_root等路径）；按实际枚举source_files和package_files。开发日期、权属或发表未确认时保留待补，不妨碍技术准备。脚本需要Python3.10+、PyMuPDF和Pillow及既有XeLaTeX，设置xelatex字段可指定其绝对路径。
 
 可选配置项：
 
@@ -15,18 +15,22 @@ assets/tex-template为参数化TeX骨架及字体许可，模板事实全部替�
 | ctex_fontset / cjk_mono_font | windows / SimSun | 非Windows可用mac或fandol及对应宋体/仿宋；init与源码生成时写入TeX |
 | source_page_capacity | 按版心与行距计算 | 单页可容纳的排版行数，8pt/10pt时为72 |
 | overfull_tolerance_pt | 1.0 | 超过该宽度的Overfull报错；缺字始终报错 |
-| delivery_dir | 交付 | package生成code.zip与软件材料包/的子目录，位于output_dir内 |
+| project_root | ../../代码 | 项目源码目录，相对于配置文件 |
+| materials_dir | .. | 放两份PDF、填写清单和协议的材料/目录，不能位于代码目录内 |
+| code_zip | 代码目录/code.zip | code.zip输出位置 |
+| allowed_ai_terms | [] | 软件功能本身确实用到的模型或服务名称，如["OpenAI"]，放行AI工具名称检查 |
+| output_dir | — | 旧版配置字段：工作文件放在项目根下该目录，材料放其中的材料/；新项目不要使用 |
 
 python /绝对路径/scripts/materials.py init --config /绝对路径/config.json
 python /绝对路径/scripts/materials.py build --config /绝对路径/config.json
 python /绝对路径/scripts/materials.py verify --config /绝对路径/config.json
 python /绝对路径/scripts/materials.py package --config /绝对路径/config.json
 
-init不覆盖已存在的TeX；后续直接编辑。build最多五次编译到目录和交叉引用稳定，超60页另外保存提交选页版，并保留完整原稿。源码50行分页；最后不足50行的尾段仅在与前页合计（按折行估算）不超过单页容量时合并，否则保留为较短的末页。源码清单与统计.json的pages_at_overflow_risk列出长行较多、可能溢出的页；实际溢出时调整字号/行距，禁止删代码。源码量以可解释的真实原始行数统计，不算生成JS或依赖。
+init不覆盖已存在的TeX，并在材料/下按模板建申请信息填写清单.md（已存在时不动）；后续直接编辑。build最多五次编译到目录和交叉引用稳定，PDF直接写入材料/，超60页另外保存提交选页版，并保留完整原稿。源码50行分页；最后不足50行的尾段仅在与前页合计（按折行估算）不超过单页容量时合并，否则保留为较短的末页。源码清单与统计.json的pages_at_overflow_risk列出长行较多、可能溢出的页；实际溢出时调整字号/行距，禁止删代码。源码量以可解释的真实原始行数统计，不算生成JS或依赖。
 
-verify会核对源码/TeX/原文件哈希、行号顺序、PDF边界、页眉页脚、纯文本页行数、旧信息及目录真实链接目标；不能替代目视。检查全部联系页、关键完整页，封面日期、目录、分页表格、长代码、页脚间距尤其要检查。修订后重打包，保留检查命令、结果和待确认项。
+verify会核对源码/TeX/原文件哈希、行号顺序、PDF边界、页眉页脚、纯文本页行数、旧信息、目录真实链接目标，以及PDF、填写清单、协议和code.zip文件中的AI工具名称；不能替代目视。检查全部联系页、关键完整页，封面日期、目录、分页表格、长代码、页脚间距尤其要检查。修订后重打包，保留检查命令、结果和待确认项。
 
-package先复核，再按delivery-layout.md在output_dir/交付/下生成code.zip（source_files+package_files及逐文件校验）和软件材料包/，并另存完整交付.zip作制作归档。交付目录每次重新生成，不在其中手改；用户确认后再把这两项移到项目根目录。要保留运行资源和配置，不能依赖示例package_files默认范围。已有打包代码时先安全解压，确保目标路径在临时工作目录内。
+package先复核，填写清单仍有“待填”时拒绝打包；随后生成代码/code.zip（source_files+package_files及逐文件校验）和制作底稿/交付文件校验.json。要保留运行资源和配置，不能依赖示例package_files默认范围。已有打包代码时先安全解压，确保目标路径在临时工作目录内。
 
 ## 功能正文的写法
 

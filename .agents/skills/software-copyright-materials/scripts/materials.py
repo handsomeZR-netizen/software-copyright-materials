@@ -1,8 +1,12 @@
 """Config-driven copyright material preparation. Python 3.10+, XeLaTeX, PyMuPDF, Pillow.
 
-init creates an editable TeX skeleton; build generates real source and PDFs;
-verify checks PDFs and provenance; package archives editable source and materials.
-All paths are relative to the configuration file/project root, never the caller's cwd.
+init creates an editable TeX skeleton and fill-in checklist; build generates real source and PDFs;
+verify checks PDFs, provenance and AI-tool mentions; package writes code.zip.
+Default layout, one folder per software (config lives in 材料/制作底稿/):
+  <软件全称 版本>/代码/           project source and code.zip
+  <软件全称 版本>/材料/           the two PDFs, 申请信息填写清单.md, optional 合作开发协议.docx
+  <软件全称 版本>/材料/制作底稿/  TeX, figures, QA images, statistics and review records
+All paths are relative to the configuration file, never the caller's cwd.
 """
 from pathlib import Path
 import argparse
@@ -16,12 +20,20 @@ import unicodedata
 from zipfile import ZipFile, ZIP_DEFLATED
 
 KIT = Path(__file__).resolve().parents[1]
+# Coding-assistant settings are not part of the software and stay out of every deliverable.
+ASSISTANT_DIRS = {'.claude', '.codex', '.agents', '.cursor', '.windsurf', '.aider'}
+ASSISTANT_FILES = {'CLAUDE.md', 'CLAUDE.local.md', 'AGENTS.md', 'GEMINI.md', '.cursorrules', 'copilot-instructions.md'}
 # Deposit source must be original code; the runnable code.zip may also carry built output.
-SOURCE_EXCLUDED = {'.git', 'node_modules', 'dist', 'build', '.venv', '__pycache__', '.runtime', 'tmp'}
-PACKAGE_EXCLUDED = {'.git', 'node_modules', '.venv', '__pycache__', '.runtime', 'tmp'}
+SOURCE_EXCLUDED = {'.git', 'node_modules', 'dist', 'build', '.venv', '__pycache__', '.runtime', 'tmp'} | ASSISTANT_DIRS
+PACKAGE_EXCLUDED = {'.git', 'node_modules', '.venv', '__pycache__', '.runtime', 'tmp'} | ASSISTANT_DIRS
+# Names of AI coding tools must not appear in the PDFs, checklist, agreement or code.zip.
+AI_TOOL_PATTERN = re.compile(r'(?i)(?<![a-z])(?:claude(?:\s*code)?|codex|chatgpt|gpt-?\d[a-z0-9.]*|copilot|anthropic|openai|gemini|deepseek|'
+                             r'cursor\s*(?:ai|ide|编辑器)|windsurf)(?![a-z])|(?:AI|人工智能|大模型)\s*(?:辅助|编程|助手|代写|生成代码)')
+DELIVERED_PDFS = ['使用说明书.pdf', '源程序鉴别材料.pdf', '使用说明书_鉴别选页.pdf']
+CHECKLIST = '申请信息填写清单.md'
+AGREEMENT = '合作开发协议.docx'
 BP_PER_MM = 72/25.4
 MONO_ADVANCE_EM = 0.602  # DejaVu Sans Mono glyph advance
-DELIVERY_MARKER = '.materials-generated'
 GEOMETRY_DEFAULTS = {'manual': {'top': 24, 'bottom': 22, 'left': 22, 'right': 22},
                      'source': {'top': 20, 'bottom': 18, 'left': 14, 'right': 14}}
 
@@ -41,14 +53,23 @@ def tex_escape(value):
 def read_config(path):
     path = Path(path).resolve()
     cfg = json.loads(path.read_text(encoding='utf-8-sig'))
-    for key in ['software_name', 'software_version', 'copyright_owner', 'project_root', 'source_files']:
+    for key in ['software_name', 'software_version', 'copyright_owner', 'source_files']:
         if not cfg.get(key):
             raise ValueError('Missing required configuration: '+key)
-    root = (path.parent / cfg['project_root']).resolve()
+    base = path.parent
+    root = (base / cfg.get('project_root', '../../代码')).resolve()
     if not root.is_dir():
         raise ValueError('Project root is not a directory: '+str(root))
-    out = (root / cfg.get('output_dir', '软著材料准备包')).resolve()
-    cfg['_root'], cfg['_out'] = root, out
+    if cfg.get('output_dir'):
+        # Older configs kept working files under the project root; their materials go to output_dir/材料.
+        work = (root / cfg['output_dir']).resolve()
+        materials = (base / cfg['materials_dir']).resolve() if cfg.get('materials_dir') else work / '材料'
+    else:
+        work, materials = base, (base / cfg.get('materials_dir', '..')).resolve()
+    if materials.is_relative_to(root):
+        raise ValueError('materials_dir must be outside the code folder: '+str(materials))
+    cfg['_root'], cfg['_out'], cfg['_materials'] = root, work, materials
+    cfg['_code_zip'] = (base / cfg['code_zip']).resolve() if cfg.get('code_zip') else root / 'code.zip'
     return cfg
 
 def excluded_dirs(cfg, kind):
@@ -57,7 +78,7 @@ def excluded_dirs(cfg, kind):
 
 def project_file(cfg, relative, kind='source'):
     rel = Path(relative)
-    if rel.is_absolute() or any(p in excluded_dirs(cfg, kind) for p in rel.parts):
+    if rel.is_absolute() or any(p in excluded_dirs(cfg, kind) for p in rel.parts) or rel.name in ASSISTANT_FILES:
         raise ValueError('Use explicit original source/config paths, not generated/dependency files: '+str(rel))
     root = cfg['_root']
     path = (root / rel).resolve()
@@ -76,7 +97,8 @@ def package_paths(cfg):
             if pattern.endswith('**'):
                 pattern += '/*'  # before Python 3.13 a trailing ** matches directories only
             matches = [p for p in root.glob(pattern) if p.is_file()
-                       and not set(p.relative_to(root).parts) & skipped and p.suffix != '.log']
+                       and not set(p.relative_to(root).parts) & skipped and p.suffix != '.log'
+                       and p.name not in ASSISTANT_FILES and p.resolve() != cfg.get('_code_zip')]
             if not matches:
                 raise ValueError('package_files entry matched no files (build output missing?): '+entry)
             found.update(project_file(cfg, p.relative_to(root), 'package') for p in matches)
@@ -146,6 +168,14 @@ def init(cfg):
     target.write_text(template, encoding='utf-8')
     (folder / 'figures').mkdir(exist_ok=True)
     print(target)
+    checklist = cfg['_materials'] / CHECKLIST
+    if not checklist.exists():
+        text = (KIT / 'assets/checklist-template/申请信息填写清单.template.md').read_text(encoding='utf-8')
+        for key in ['software_name', 'software_version', 'copyright_owner']:
+            text = text.replace('@@'+key+'@@', str(cfg[key]))
+        checklist.parent.mkdir(parents=True, exist_ok=True)
+        checklist.write_text(text, encoding='utf-8')
+        print(checklist)
 
 def generate_source(cfg):
     root, out = cfg['_root'], cfg['_out']
@@ -245,22 +275,26 @@ def compile_tex(cfg, folder, target):
     cfg.setdefault('_compile_runs',[]).append({'file':target.name,'passes':used_passes,'auxiliary_files_stable':True})
 
 def build(cfg):
-    out = cfg['_out']
+    out, materials = cfg['_out'], cfg['_materials']
     manual = out / 'manual-tex'
     if not (manual / 'main.tex').is_file():
         raise FileNotFoundError('Run init and author the real manual before build')
-    compile_tex(cfg, manual, out / '使用说明书.pdf')
-    compile_tex(cfg, generate_source(cfg), out / '源程序鉴别材料.pdf')
+    materials.mkdir(parents=True, exist_ok=True)
+    compile_tex(cfg, manual, materials / '使用说明书.pdf')
+    compile_tex(cfg, generate_source(cfg), materials / '源程序鉴别材料.pdf')
     write_json(out/'编译收敛记录.json',cfg['_compile_runs'])
     import fitz
-    full = fitz.open(out / '使用说明书.pdf')
+    full = fitz.open(materials / '使用说明书.pdf')
     selection = deposit_selection(len(full))
+    selected_path = materials / '使用说明书_鉴别选页.pdf'
     if len(full) > 60:
         selected = fitz.open()
         for i in selection:
             selected.insert_pdf(full, from_page=i, to_page=i)
-        selected.save(out / '使用说明书_鉴别选页.pdf')
+        selected.save(selected_path)
         selected.close()
+    elif selected_path.exists():
+        selected_path.unlink()  # stale copy from an earlier, longer manual
     write_json(out / '文档页序.json', {'full_pages': len(full), 'selected_pages': [x+1 for x in selection],
                                       'note': 'Full manual retained; selected manual pages preserve their original header numbers.'})
     full.close()
@@ -268,10 +302,40 @@ def build(cfg):
     if report['issues']:
         raise RuntimeError('Build verification failed; read 复核结果.json')
 
+def ai_tool_mentions(text, allowed=()):
+    """AI coding-tool names found in text, minus terms the software itself legitimately uses."""
+    allowed = {a.lower() for a in allowed}
+    return sorted({m.group(0) for m in AI_TOOL_PATTERN.finditer(text) if m.group(0).lower() not in allowed})
+
+def docx_text(path):
+    with ZipFile(path) as archive:
+        xml = ''.join(archive.read(n).decode('utf-8', errors='replace') for n in archive.namelist()
+                      if (n.startswith('word/') and n.endswith('.xml')) or n.startswith('docProps/'))
+    return re.sub(r'<[^>]+>', '', xml)
+
+def check_ai_mentions(cfg, issues):
+    """Deliverables describe the software only; tool names in code.zip, checklist or agreement fail verification."""
+    allowed = cfg.get('allowed_ai_terms', [])
+    files = sorted(set(project_file(cfg, rel) for rel in cfg['source_files']) | package_paths(cfg))
+    for path in files:
+        rel = path.relative_to(cfg['_root']).as_posix()
+        found = ai_tool_mentions(rel, allowed)
+        if path.stat().st_size < 4_000_000 and path.suffix.lower() not in {'.png', '.jpg', '.jpeg', '.gif', '.ico', '.woff', '.woff2', '.ttf', '.zip'}:
+            found += ai_tool_mentions(path.read_bytes().decode('utf-8', errors='ignore'), allowed)
+        if found:
+            issues.append('AI tool mention in code.zip file '+rel+': '+', '.join(sorted(set(found))))
+    for name in [CHECKLIST, AGREEMENT]:
+        path = cfg['_materials'] / name
+        if path.is_file():
+            text = docx_text(path) if path.suffix == '.docx' else path.read_text(encoding='utf-8-sig')
+            found = ai_tool_mentions(text, allowed)
+            if found:
+                issues.append('AI tool mention in '+name+': '+', '.join(found))
+
 def verify(cfg):
     import fitz
     from PIL import Image, ImageDraw
-    out, issues, summaries = cfg['_out'], [], []
+    out, materials, issues, summaries = cfg['_out'], cfg['_materials'], [], []
     stats = json.loads((out / '源码清单与统计.json').read_text(encoding='utf-8'))
     for item in stats['files']:
         if digest(project_file(cfg, item['file'])) != item['sha256']:
@@ -288,7 +352,7 @@ def verify(cfg):
     title = cfg['software_name']
     qa = out / 'qa'
     for name, kind in [('使用说明书.pdf', 'manual'), ('源程序鉴别材料.pdf', 'source')]:
-        doc = fitz.open(out / name)
+        doc = fitz.open(materials / name)
         folder = qa / kind
         folder.mkdir(parents=True, exist_ok=True)
         counts = []
@@ -318,6 +382,8 @@ def verify(cfg):
                     issues.append(label+' header page number mismatch')
                 if re.sub(r'\s+', '', cfg['copyright_owner']) not in re.sub(r'\s+', '', footer):
                     issues.append(label+' copyright owner missing from footer')
+            for word in ai_tool_mentions(text, cfg.get('allowed_ai_terms', [])):
+                issues.append(label+' AI tool mention: '+word)
             for word in cfg.get('stale_terms', []):
                 if re.sub(r'\s+', '', word) in normalized:
                     issues.append(label+' stale project information: '+word)
@@ -372,8 +438,9 @@ def verify(cfg):
                 x,y = (i-start)%3*400+10,(i-start)//3*455+25
                 sheet.paste(picture,(x,y)); draw.text((x,y-20),str(i+1),fill='black')
             sheet.save(folder/f'contact-{start//12+1}.png')
-        summaries.append({'file':name,'pages':len(doc),'source_rows':counts,'sha256':digest(out/name)})
+        summaries.append({'file':name,'pages':len(doc),'source_rows':counts,'sha256':digest(materials/name)})
         doc.close()
+    check_ai_mentions(cfg, issues)
     outstanding = [key for key in ['development_date','publication_status','rights_confirmed'] if not cfg.get(key)]
     report = {'status':'technical_checks_passed' if not issues else 'failed', 'issues':issues, 'pdfs':summaries,
               'outstanding_human_fields':outstanding, 'visual_review':'required: inspect every contact sheet and important full-size pages',
@@ -382,45 +449,19 @@ def verify(cfg):
     print(json.dumps(report,ensure_ascii=False,indent=2))
     return report
 
-def copy_tree_files(source, target, skip=('build',)):
-    for path in sorted(source.rglob('*')):
-        rel = path.relative_to(source)
-        if path.is_file() and not set(rel.parts) & set(skip) and path.suffix not in {'.log','.aux','.out','.toc'}:
-            (target/rel).parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(path, target/rel)
-
-def assemble_delivery(cfg, delivery):
-    """Lay out code.zip's sibling 软件材料包/ as described in references/delivery-layout.md."""
-    out = cfg['_out']
-    bundle = delivery/'软件材料包'
-    if bundle.exists():
-        shutil.rmtree(bundle)
-    bundle.mkdir(parents=True)
-    for name in ['使用说明书.pdf', '源程序鉴别材料.pdf', '使用说明书_鉴别选页.pdf', '申请信息填写清单.md']:
-        if (out/name).is_file():
-            shutil.copy2(out/name, bundle/name)
-    for kind in ['manual-tex', 'source-tex']:
-        copy_tree_files(out/kind, bundle/'可编辑原稿'/kind)
-    for name in ['源码清单与统计.json', '文档页序.json']:
-        if (out/name).is_file():
-            (bundle/'源码映射').mkdir(exist_ok=True)
-            shutil.copy2(out/name, bundle/'源码映射'/name)
-
 def package(cfg):
-    out, root = cfg['_out'], cfg['_root']
+    """Write 代码/code.zip and a hash manifest of everything the user hands in."""
+    out, root, materials = cfg['_out'], cfg['_root'], cfg['_materials']
     report = verify(cfg)
     if report['issues']:
         raise RuntimeError('Resolve verification issues before packaging')
-    delivery = (out/cfg.get('delivery_dir', '交付')).resolve()
-    if not delivery.is_relative_to(out):
-        raise ValueError('delivery_dir must stay inside output_dir')
-    if delivery.exists() and any(delivery.iterdir()) and not (delivery/DELIVERY_MARKER).exists():
-        raise FileExistsError('Existing delivery folder preserved; it was not generated by this script: '+str(delivery))
-    delivery.mkdir(parents=True, exist_ok=True)
-    (delivery/DELIVERY_MARKER).write_text('Regenerated by materials.py package; edit sources in output_dir instead.\n', encoding='utf-8')
+    checklist = materials/CHECKLIST
+    if checklist.is_file() and '待填' in checklist.read_text(encoding='utf-8-sig'):
+        raise RuntimeError('Fill every 待填 item in '+str(checklist)+' (unknown facts go under 需要本人确认)')
     files = sorted(set(project_file(cfg, rel) for rel in cfg['source_files']) | package_paths(cfg))
     records = [{'path':p.relative_to(root).as_posix(),'sha256':digest(p)} for p in files]
-    source_zip = delivery/'code.zip'
+    source_zip = cfg['_code_zip']
+    source_zip.parent.mkdir(parents=True, exist_ok=True)
     with ZipFile(source_zip,'w',ZIP_DEFLATED) as archive:
         for path in files:
             archive.write(path,path.relative_to(root).as_posix())
@@ -431,25 +472,10 @@ def package(cfg):
         for item in records:
             if hashlib.sha256(archive.read(item['path'])).hexdigest()!=item['sha256']:
                 raise RuntimeError('ZIP source hash mismatch')
-    assemble_delivery(cfg, delivery)
-    # Complete material archive also contains TeX, images, provenance, review and code.zip;
-    # the 软件材料包 copy is left out because it duplicates files already archived.
-    bundle = delivery/'软件材料包'
-    material_files = sorted(p for p in out.rglob('*') if p.is_file() and
-                            not set(p.relative_to(out).parts)&{'build','qa'} and p.name not in {'完整交付.zip','交付文件校验.json',DELIVERY_MARKER}
-                            and not p.is_relative_to(bundle) and p.suffix not in {'.log','.aux','.out','.toc'})
-    manifest = [{'path':p.relative_to(out).as_posix(),'sha256':digest(p)} for p in material_files]
-    write_json(out/'交付文件校验.json',manifest)
-    with ZipFile(out/'完整交付.zip','w',ZIP_DEFLATED) as archive:
-        for path in material_files+[out/'交付文件校验.json']:
-            archive.write(path,path.relative_to(out).as_posix())
-    with ZipFile(out/'完整交付.zip') as archive:
-        if archive.testzip():
-            raise RuntimeError('Material ZIP CRC failure')
-        for item in manifest:
-            if hashlib.sha256(archive.read(item['path'])).hexdigest()!=item['sha256']:
-                raise RuntimeError('Material ZIP hash mismatch: '+item['path'])
-    print(source_zip); print(bundle); print(out/'完整交付.zip')
+    delivered = [materials/name for name in DELIVERED_PDFS+[CHECKLIST, AGREEMENT] if (materials/name).is_file()]
+    write_json(out/'交付文件校验.json',[{'path':p.name,'sha256':digest(p)} for p in delivered]+
+               [{'path':'code.zip','sha256':digest(source_zip),'files':len(records)}])
+    print(source_zip); print(materials)
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description=__doc__)

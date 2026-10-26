@@ -2,8 +2,6 @@
   "software_name": "填写新的软件全称",
   "software_version": "V1.0",
   "copyright_owner": "填写真实著作权人，不能沿用旧项目人员",
-  "project_root": "../../新项目",
-  "output_dir": "软著材料准备包",
   "development_date": "",
   "publication_status": "",
   "rights_confirmed": false,
@@ -27,6 +25,6 @@
   "manual_front_pages_without_header": 1,
   "ctex_fontset": "windows",
   "cjk_mono_font": "SimSun",
-  "delivery_dir": "交付",
-  "stale_terms": []
+  "stale_terms": [],
+  "allowed_ai_terms": []
 }

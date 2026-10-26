@@ -1,28 +1,43 @@
 ---
 name: software-copyright-materials
-description: 根据真实项目源码准备中国计算机软件著作权登记材料，沿用用户TeX模板生成PDF，复核源码与说明书，整理code.zip及软件材料包，并按网页申请字段生成填写内容。用户提到软著、软件著作权登记/申请、源程序鉴别材料、源代码前后30页/60页、使用说明书/用户手册/操作手册、中国版权保护中心网页填表、主要功能/技术特点字数、合作开发协议时使用。用于软著材料制作、修改、归档和填表参考；不代替身份权属确认或登记机构审查。
+description: 根据真实项目源码准备中国计算机软件著作权登记材料，沿用用户TeX模板生成PDF，复核源码与说明书，按“每个软著一个文件夹、内分代码/材料”整理code.zip与交付PDF，并按网页申请字段生成填写清单。用户提到软著、软件著作权登记/申请、源程序鉴别材料、源代码前后30页/60页、使用说明书/用户手册/操作手册、中国版权保护中心网页填表、主要功能/技术特点字数、合作开发协议时使用。用于软著材料制作、修改、归档和填表参考；不代替身份权属确认或登记机构审查。
 ---
 
 # 软著材料准备与网页填表
 
-以用户真实项目为依据，交付可编辑TeX、最终PDF、完整代码压缩包及一份可直接用于网页填表的Markdown。软件名称、版本、功能、源码行数、日期和字段内容须在这些材料中一致。
+以用户真实项目为依据，交付两份PDF、一份可直接用于网页填表的Markdown和完整代码压缩包。软件名称、版本、功能、源码行数、日期和字段内容须在这些材料中一致。
+
+## 交付布局（每次都按此）
+
+```text
+<软件全称> V1.0/
+├─ 代码/        项目源码 + code.zip
+└─ 材料/        使用说明书.pdf、源程序鉴别材料.pdf、申请信息填写清单.md、合作开发协议.docx（仅用户要求时）
+   └─ 制作底稿/  config.json、TeX、配图、qa、统计与复核记录
+```
+
+一个软著一个文件夹，多个软著并列。材料/根部只放交付文件，其余一律进制作底稿/。细则见[文件整理](references/delivery-layout.md)。
+
+## 交付内容不提及AI工具
+
+PDF、填写清单、协议和code.zip里不写Claude Code、Codex、ChatGPT、Copilot、Cursor等AI编程工具名称，也不写“AI辅助开发”等制作过程说明；code.zip不带CLAUDE.md、AGENTS.md和.claude/.codex等配置。verify会扫描并报错。“开发工具”字段写语言运行时、框架、构建工具和编辑器。不替用户作关于开发方式的声明，平台要求声明时由本人按实际情况填写。
 
 ## 按任务读取
 
 - 准备或修改材料：读取[材料制作与复核](references/materials-workflow.md)，使用assets/tex-template中的参数化模板和scripts/materials.py。仅沿用参数化模板格式，不继承任何示例项目事实。
-- 填写网页申请或用户发来表单截图：读取[网页字段规则](references/web-form.md)和references/web-form-schema.json。优先更新已有申请信息填写清单.md，避免另造重复文件；用户只要归档时，不在回复重贴全部字段。截图是当次字段及限字依据，不能把2026年10月截图当作永久规则。
-- 整理交付：读取[文件整理](references/delivery-layout.md)。将代码、运行资源及启动说明完整保存为code.zip；软件材料包只展示当前两类PDF及填写Markdown，TeX主文件、配图和映射放子目录。历史和核验记录另存归档。
+- 填写网页申请或用户发来表单截图：读取[网页字段规则](references/web-form.md)和references/web-form-schema.json。清单格式沿用assets/checklist-template，只更新材料/申请信息填写清单.md，避免另造重复文件；用户只要归档时，不在回复重贴全部字段。截图是当次字段及限字依据，不能把2026年10月截图当作永久规则。
+- 整理交付或整理旧项目：读取[文件整理](references/delivery-layout.md)。
 
 ## 合作开发协议
 
-协议默认不制作，只在用户点名要求时生成。生成时沿用 [DOCX 协议模板](assets/agreement-template/合作开发协议模板.docx) 的条款内容和格式，用 scripts/agreement.py 填写，规则见 [协议模板使用](references/cooperation-agreement.md)。要点：著作权归属写为各方共同享有，不设份额或比例；协议签署日期早于开发完成日期（未给时取完成日期前合理日期并告知用户）；登记申请经办人默认合作方一；分工按实际代码模块拟定；交付件不留红色XXX，签署栏日期留空手写。用户指定其他模板时以其指定为准。
+协议默认不制作，只在用户点名要求时生成。生成时沿用 [DOCX 协议模板](assets/agreement-template/合作开发协议模板.docx) 的条款内容和格式，用 scripts/agreement.py 填写，规则见 [协议模板使用](references/cooperation-agreement.md)。只交付Word文件 材料/合作开发协议.docx，审阅用PDF留在制作底稿/。要点：著作权归属写为各方共同享有，不设份额或比例；协议签署日期早于开发完成日期（未给时取完成日期前合理日期并告知用户）；登记申请经办人默认合作方一；分工按实际代码模块拟定；交付件不留红色XXX，签署栏日期留空手写。用户指定其他模板时以其指定为准。
 
 ## 核心约束
 
-1. 用实现、实际运行截图和真实记录支撑说明书功能。不得把AI辅助开发误写成产品内置AI，也不得增加摄像头、识别模型、云服务等未实现功能。
+1. 用实现、实际运行截图和真实记录支撑说明书功能。不得增加摄像头、识别模型、云服务等未实现功能，也不把开发过程使用的工具写成产品功能。
 2. 源程序从原始代码抽取，保留注释与许可。排除依赖和生成代码，长行换行只计一次；保存文件顺序、原始行号和SHA-256。完整源码与鉴别PDF分别交付。
 3. 开发环境写实际开发环境；本次机器验证环境不能自动证明申请人历史开发配置。日期来自用户提供事实，未知留待补；合作、委托、单位权属、发表、签章和声明不推定。
-4. 宿主自带TeX编辑器及编译器时可优先使用（如Codex）；否则查找本机已有XeLaTeX（PATH中的xelatex或TeX Live/MiKTeX安装目录），写入配置的xelatex字段，找不到时告知用户，不自行下载安装。目录局部压缩，保留全部条目；多遍编译到aux/toc/out稳定，逐项对比目录显示页码与目标页。正文不通过删内容或缩到不清晰来凑页。
+4. 宿主环境自带TeX编译器时可优先使用；否则查找本机已有XeLaTeX（PATH中的xelatex或TeX Live/MiKTeX安装目录），写入配置的xelatex字段，找不到时告知用户，不自行下载安装。目录局部压缩，保留全部条目；多遍编译到aux/toc/out稳定，逐项对比目录显示页码与目标页。正文不通过删内容或缩到不清晰来凑页。
 5. 修改PDF后重核验、目视检查受影响页面及联系页、重打包；校验压缩包CRC及包内文件SHA-256。只通过技术预检不能宣称获证或提交条件全部满足。
 6. 当前官方规则与平台字段须在正式申请时复核。保留来源、访问日期及无法核实的事项；历史模板和高校指南不作为现行全国强制要求。
 7. 不因为整理资料或填表参考而提交、签署或联系第三方。
@@ -31,12 +46,12 @@ description: 根据真实项目源码准备中国计算机软件著作权登记�
 
 ## 工具用法
 
-脚本位于本技能目录的scripts/下，调用时使用其绝对路径。scripts/materials.py支持init/build/verify/package，配置和资源路径相对于配置文件，不依赖工作目录。先列齐source_files及package_files（package_files可写目录或glob，如"dist/**"）；已有说明书只编辑原TeX，不重新init覆盖。package生成output_dir/交付/下的code.zip和软件材料包/，用户确认后再移到项目根目录。配置项、运行依赖及命令见references/materials-workflow.md。
+脚本位于本技能目录的scripts/下，调用时使用其绝对路径。scripts/materials.py支持init/build/verify/package，配置放在材料/制作底稿/config.json，路径相对于配置文件，不依赖工作目录。先列齐source_files及package_files（package_files可写目录或glob，如"dist/**"）；已有说明书只编辑原TeX，不重新init覆盖。init建TeX骨架和填写清单，build把PDF写进材料/，package生成代码/code.zip。配置项、运行依赖及命令见references/materials-workflow.md。
 
-scripts/check_web_form.py --input 字段.json --stats 源码清单与统计.json 校验当前schema的字数、必填，并核对源程序量与源码统计一致。字段文件是核验中间输入，最终仅更新已有填写Markdown；界面实际计数器有差异时以界面为准。
+scripts/check_web_form.py --input 字段.json --stats 源码清单与统计.json 校验当前schema的字数、必填，并核对源程序量与源码统计一致。字段文件（制作底稿/web-form.json）是核验中间输入，最终仅更新已有填写Markdown；界面实际计数器有差异时以界面为准。
 
 当前项目已仅剩code.zip时，先在独立临时目录安全解压核对清单，再依据实际实现编辑；不得因为看不到散放源码而编造字段。用户确认整理后才移除可恢复的散放副本。
 
 ## 完整匿名示例
 
-仓库examples/balance-lab（安装后为assets/complete-example）保留可运行源码、实机截图、TeX/PDF及网页填表示例。首次使用或做行为验收时读取其README.md。该示例的名称、主体、日期和记录均为示例值，不能直接用于真实申请。
+仓库examples/balance-lab（安装后为assets/complete-example）按上述代码/材料布局保留可运行源码、实机截图、TeX/PDF及网页填表示例。首次使用或做行为验收时读取其README.md。该示例的名称、主体、日期和记录均为示例值，不能直接用于真实申请。

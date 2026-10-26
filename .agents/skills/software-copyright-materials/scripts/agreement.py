@@ -6,7 +6,9 @@ Config keys (paths relative to the config file):
   software_name, software_version (default V1.0), development_date ("2026 年 9 月 27 日"),
   signing_date (must be earlier than development_date; empty leaves a blank to fill by hand),
   purpose (one sentence ending with 。), parties [{name, id_number, duties}] (2-4, signing order),
-  handler (default: first party), output (.docx), template (optional).
+  handler (default: first party), output (.docx, default ../合作开发协议.docx, i.e. 材料/ when the
+  config sits in 材料/制作底稿/), template (optional). --pdf writes a review PDF next to the config,
+  so 材料/ keeps only the Word file.
 """
 import argparse, json, pathlib, re, subprocess, sys
 import docx
@@ -33,7 +35,8 @@ def check_id(number):
 
 def load(path):
     cfg = json.loads(path.read_text(encoding='utf-8'))
-    for key in ['software_name', 'development_date', 'purpose', 'parties', 'output']:
+    cfg.setdefault('output', '../合作开发协议.docx')
+    for key in ['software_name', 'development_date', 'purpose', 'parties']:
         if not cfg.get(key):
             raise ValueError('Missing '+key)
     parties = cfg['parties']
@@ -147,13 +150,13 @@ def build(cfg):
     return out
 
 
-def export_pdf(path):
-    """Refresh page fields and export with Microsoft Word (Windows)."""
+def export_pdf(path, folder):
+    """Refresh page fields and export with Microsoft Word (Windows) into folder."""
     script = ('$w=New-Object -ComObject Word.Application;$w.Visible=$false;try{'
               '$d=$w.Documents.Open($env:AGREEMENT_DOCX);$d.Fields.Update()|Out-Null;$d.Save();'
               '$d.ExportAsFixedFormat($env:AGREEMENT_PDF,17);$d.Close()}'
               'finally{if($w.Documents.Count -eq 0){$w.Quit()}}')
-    pdf = path.with_suffix('.pdf')
+    pdf = folder / path.with_suffix('.pdf').name
     env = dict(__import__('os').environ, AGREEMENT_DOCX=str(path), AGREEMENT_PDF=str(pdf))
     subprocess.run(['powershell', '-NoProfile', '-Command', script], check=True, env=env)
     return pdf
@@ -164,10 +167,11 @@ def main():
     parser.add_argument('--config', required=True)
     parser.add_argument('--pdf', action='store_true', help='also export PDF via Word')
     args = parser.parse_args()
-    out = build(load(pathlib.Path(args.config).resolve()))
+    cfg = load(pathlib.Path(args.config).resolve())
+    out = build(cfg)
     print(out)
     if args.pdf:
-        print(export_pdf(out))
+        print(export_pdf(out, cfg['_base']))
 
 
 if __name__ == '__main__':

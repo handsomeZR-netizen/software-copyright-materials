@@ -6,17 +6,17 @@
 
 给 AI 编程助手（Claude Code、Codex）用的技能包：根据项目的真实源码，制作中国计算机软件著作权登记需要的使用说明书、源程序鉴别材料和网页申请填写内容，并把代码整理成 `code.zip`。
 
-[示例说明书 PDF](examples/balance-lab/materials/使用说明书.pdf) · [示例源程序 PDF](examples/balance-lab/materials/源程序鉴别材料.pdf) · [下载发布版本](https://github.com/handsomeZR-netizen/software-copyright-materials/releases/latest)
+[示例说明书 PDF](examples/balance-lab/材料/使用说明书.pdf) · [示例源程序 PDF](examples/balance-lab/材料/源程序鉴别材料.pdf) · [下载发布版本](https://github.com/handsomeZR-netizen/software-copyright-materials/releases/latest)
 
 ## 产出内容
 
 | 产出 | 说明 |
 | --- | --- |
-| 使用说明书 PDF | 用 TeX 模板排版，交付时附 TeX 原稿和配图，方便以后修改 |
+| 使用说明书 PDF | 用 TeX 模板排版，TeX 原稿和配图留在制作底稿里，方便以后修改 |
 | 源程序鉴别材料 PDF | 从原始文件抽取，附文件顺序、原始行号和 SHA-256 映射 |
 | 申请信息填写清单.md | 按网页表单字段顺序整理，脚本校验必填项、字数和源程序量 |
 | `code.zip` | 源码、配置、锁文件、测试、构建产物、启停脚本和逐文件校验 |
-| 合作开发协议 | 点名需要时，用 `agreement.py` 基于仓库内的 DOCX 模板生成 DOCX 和 PDF |
+| 合作开发协议 | 默认不做；点名需要时，用 `agreement.py` 基于仓库内的 DOCX 模板生成 DOCX |
 
 ## 遵循的原则
 
@@ -25,6 +25,7 @@
 - 超过 60 页时取前后各 30 页，不足 60 页全部提交；不靠删内容、补空行或缩小字号凑页数。
 - 软件名称、版本、日期、源码行数在说明书、源程序材料和填写清单里保持一致。
 - 著作权人、权属、开发完成日期、发表情况等事实以用户提供的为准，不知道的留空待补。
+- 交付的 PDF、填写清单、协议和 `code.zip` 不出现 AI 编程工具名称，`code.zip` 不带 `CLAUDE.md`、`AGENTS.md`、`.claude/`、`.codex/` 等配置；`verify` 会扫描并报错。
 - 只准备材料，不替用户提交申请、签署文件或联系第三方。
 
 ## 安装
@@ -52,7 +53,7 @@ cd software-copyright-materials
 在 Codex 里：
 
 ```text
-使用 $software-copyright-materials 为我的新项目准备软著源码材料、TeX说明书和网页申请填写参考，并整理成code.zip和软件材料包。
+使用 $software-copyright-materials 为我的新项目准备软著源码材料、TeX说明书和网页申请填写参考，按“代码/材料”布局整理。
 ```
 
 开始前准备好这些信息：
@@ -71,7 +72,7 @@ cd software-copyright-materials
 
 ## 命令行流程
 
-Agent 会按这个流程调用脚本，也可以手动运行。所有路径都相对于配置文件解析，与当前工作目录无关。
+技能会按这个流程调用脚本，也可以手动运行。配置文件放在 `材料/制作底稿/config.json`，所有路径都相对于配置文件解析，与当前工作目录无关。
 
 ```text
 写配置 → init → 编写说明书、截图 → build → 目视检查 → package
@@ -79,34 +80,36 @@ Agent 会按这个流程调用脚本，也可以手动运行。所有路径都�
 
 ```powershell
 $kit = '.agents/skills/software-copyright-materials/scripts'
-python $kit/materials.py init    --config 配置.json   # 生成说明书 TeX 骨架（已存在时不覆盖）
-python $kit/materials.py build   --config 配置.json   # 编译两份 PDF，并自动执行 verify
-python $kit/materials.py verify  --config 配置.json   # 单独复核
-python $kit/materials.py package --config 配置.json   # 复核通过后打包
-python $kit/check_web_form.py --input 字段.json --stats 输出目录/源码清单与统计.json
-python $kit/agreement.py --config agreement.json --pdf   # 合作开发协议（需要时）
+$cfg = '材料/制作底稿/config.json'
+python $kit/materials.py init    --config $cfg   # 生成说明书 TeX 骨架和填写清单（已存在时不覆盖）
+python $kit/materials.py build   --config $cfg   # 编译两份 PDF 到 材料/，并自动执行 verify
+python $kit/materials.py verify  --config $cfg   # 单独复核
+python $kit/materials.py package --config $cfg   # 复核通过、清单无“待填”后生成 代码/code.zip
+python $kit/check_web_form.py --input 材料/制作底稿/web-form.json --stats 材料/制作底稿/源码清单与统计.json
+python $kit/agreement.py --config 材料/制作底稿/agreement.json --pdf   # 合作开发协议（点名需要时）
 ```
 
 `verify` 会检查源码哈希和行号顺序、A4 尺寸、页眉页脚、目录页码与实际跳转目标、残留的模板文字，并把每页渲染成图片放进 `qa/`，供人工目视检查。机器检查通过不代表排版没有问题，联系页（多页缩略图拼在一张图上）和关键页面仍然需要人看一遍。
 
-输出目录结构：
+目录结构：一个软著一个文件夹，多个软著并列放。
 
 ```text
-输出目录/
-├─ manual-tex/              说明书 TeX 原稿和配图
-├─ source-tex/              源程序 TeX（每次 build 重新生成）
-├─ 使用说明书.pdf
-├─ 源程序鉴别材料.pdf
-├─ 源码清单与统计.json      文件、原始行号、哈希、每页行号区间
-├─ 复核结果.json
-├─ qa/                      逐页图片和联系页
-├─ 交付/
-│  ├─ code.zip
-│  └─ 软件材料包/           两份 PDF、填写清单、可编辑原稿、源码映射
-└─ 完整交付.zip             制作过程的完整归档
+<软件全称> V1.0/
+├─ 代码/                      项目源码，package 生成的 code.zip 也放这里
+└─ 材料/
+   ├─ 使用说明书.pdf
+   ├─ 源程序鉴别材料.pdf
+   ├─ 申请信息填写清单.md      对照官网申请页逐项填写
+   ├─ 合作开发协议.docx        仅点名需要时生成
+   └─ 制作底稿/
+      ├─ config.json
+      ├─ manual-tex/           说明书 TeX 原稿和配图
+      ├─ source-tex/           源程序 TeX（每次 build 重新生成）
+      ├─ qa/                   逐页图片和联系页
+      └─ 源码清单与统计.json、复核结果.json 等记录
 ```
 
-`交付/` 每次 `package` 都会重新生成，不要在里面修改。确认无误后，再把 `code.zip` 和 `软件材料包/` 移到项目根目录。
+`材料/` 根部只放要上传或填写的文件，其余都在 `制作底稿/`。
 
 ### 配置
 
@@ -116,7 +119,7 @@ python $kit/agreement.py --config agreement.json --pdf   # 合作开发协议（
 | --- | --- |
 | `software_name` / `software_version` | 软件全称和版本，各份材料必须一致 |
 | `copyright_owner` | 实际著作权人 |
-| `project_root` | 项目根目录，相对于配置文件 |
+| `project_root` | 项目根目录，相对于配置文件；按上面的布局时默认 `../../代码`，可不写 |
 | `source_files` | 收入源程序材料的原创源文件，按排版顺序列出 |
 
 常用可选项：`package_files` 列出放进 `code.zip` 的其他文件，可以写目录或通配符，如 `"dist/**"`。`development_date` 是开发完成日期。`stale_terms` 列出不应出现在 PDF 中的旧项目名称。完整说明见 [材料制作与复核](.agents/skills/software-copyright-materials/references/materials-workflow.md)。
@@ -132,12 +135,12 @@ python $kit/agreement.py --config agreement.json --pdf   # 合作开发协议（
 | 界面截图 | 7 张，均从实际运行中采集 |
 | 应用测试 | 14 项 |
 
-![天平实验训练示例的主界面](examples/balance-lab/materials/manual-tex/figures/01-home.png)
+![天平实验训练示例的主界面](examples/balance-lab/材料/制作底稿/manual-tex/figures/01-home.png)
 
 运行示例需要 Node.js 22.18 及以上：
 
 ```powershell
-cd examples/balance-lab/code
+cd examples/balance-lab/代码
 npm ci
 npm test
 npm run build
@@ -147,7 +150,7 @@ npm start          # 打开 http://localhost:3187
 在仓库根目录重新生成示例材料：
 
 ```powershell
-python .agents/skills/software-copyright-materials/scripts/materials.py build --config examples/balance-lab/config.json
+python .agents/skills/software-copyright-materials/scripts/materials.py build --config examples/balance-lab/材料/制作底稿/config.json
 ```
 
 示例的软件名称、著作权人、日期和记录编号都是虚构的，不能用于真实申请。这些页数也只是这个示例的结果，不是其他项目必须达到的要求。
@@ -174,12 +177,12 @@ scripts/
 python -m unittest discover -s .agents/skills/software-copyright-materials/scripts -p 'test_*.py' -v
 ```
 
-修改脚本后要跑这 14 项测试；修改示例应用逻辑后要跑示例的 npm 测试并重新构建。贡献约定见 [AGENTS.md](AGENTS.md)。
+修改脚本后要跑这 21 项测试；修改示例应用逻辑后要跑示例的 npm 测试并重新构建。贡献约定见 [AGENTS.md](AGENTS.md)。
 
 ## 使用边界
 
 - 本技能只提供材料制作和技术检查，不代替身份与权属确认，也不代替登记机构的审查，不保证获证。
 - 登记规则和网页字段会变。仓库记录的字数限制来自 2026 年 10 月的表单截图，正式申请时要以当时的官方要求和页面为准。
-- 开发过程中用过 AI 辅助的，按事实保留，不要在材料或声明里写成“未使用 AI”。
+- 交付材料只描述软件本身，不写开发过程用了什么工具；平台要求声明开发方式时，由本人按实际情况填写，技能不代为声明。
 - 公开仓库中的示例已经匿名处理，不包含真实姓名、项目标识、申请日期、本机路径、签名、证件或凭据，Git 提交也使用匿名作者。
 - 本仓库公开展示源码和材料，但不额外授予商业使用、再许可或转让的权利。第三方组件和字体遵守各自附带的许可。

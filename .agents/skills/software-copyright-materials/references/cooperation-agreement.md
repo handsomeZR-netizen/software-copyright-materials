@@ -11,10 +11,10 @@
 用 ../scripts/agreement.py 生成，不手工逐段改：
 
 ```
-python /绝对路径/scripts/agreement.py --config /项目/软著材料准备包/agreement.json --pdf
+python /绝对路径/scripts/agreement.py --config /软著文件夹/材料/制作底稿/agreement.json --pdf
 ```
 
-agreement.json 与 config.json 放在同一目录，字段：software_name、software_version、development_date、signing_date、purpose（一句“本软件用于……。”，取自开发目的字段）、parties（按署名顺序列出 name、id_number、duties）、handler（缺省为合作方一）、output（建议“合作开发协议/合作开发协议.docx”）。脚本支持2–4方，自动删除多余合作方段落、调整“一式N份”和签署栏，校验身份证校验位与签署日期，残留XXX时报错。--pdf 调用本机Word导出并刷新页码域；Word不可用时用其他DOCX渲染工具导出。
+agreement.json 与 config.json 放在同一目录（材料/制作底稿/），字段：software_name、software_version、development_date、signing_date、purpose（一句“本软件用于……。”，取自开发目的字段）、parties（按署名顺序列出 name、id_number、duties）、handler（缺省为合作方一）、output（缺省“../合作开发协议.docx”，即 材料/合作开发协议.docx，一般不写）。脚本支持2–4方，自动删除多余合作方段落、调整“一式N份”和签署栏，校验身份证校验位与签署日期，残留XXX时报错。--pdf 调用本机Word刷新页码域并导出审阅用PDF到 制作底稿/；交付只给Word文件。Word不可用时用其他DOCX渲染工具导出到 制作底稿/ 检查。
 
 ## 填写规则
 
@@ -28,7 +28,7 @@ agreement.json 与 config.json 放在同一目录，字段：software_name、sof
 
 ## 交付与检查
 
-协议放在 output_dir/合作开发协议/ 下（DOCX＋PDF），与 package 生成的交付目录分开，避免被重建覆盖；申请信息填写清单的上传材料表加“权属证明（合作开发）”一行，并把开发方式、权利取得方式和著作权人信息同步更新。著作权人确定后同步修改 config.json 的 copyright_owner 与说明书 TeX 的 \copyrightOwner，再 build/verify/package。
+协议Word放在 材料/合作开发协议.docx，审阅PDF只在 制作底稿/；申请信息填写清单的上传材料表加“权属证明（合作开发）”一行（签字扫描后上传），并把开发方式、权利取得方式和著作权人信息同步更新。著作权人确定后同步修改 config.json 的 copyright_owner 与说明书 TeX 的 \copyrightOwner，再 build/verify/package。
 
 导出后逐页检查：章节标题不孤行、签署表格不跨页、姓名与签署空间完整、页码为“第 N / M 页”，全文无XXX。导出前确认目标DOCX没有在Word中打开（被占用时保存会失败），不要关闭用户已打开的Word窗口。
 
