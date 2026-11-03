@@ -31,7 +31,7 @@ New-Item -ItemType Directory -Force -Path $exampleDestination | Out-Null
 $skip = @('node_modules','build','qa','.runtime','dist','__pycache__')
 Get-ChildItem -LiteralPath $exampleSource -Recurse -File -Force | ForEach-Object {
   $relative = $_.FullName.Substring($exampleSource.Length).TrimStart('\','/')
-  $parts = $relative -split '[\/]'
+  $parts = $relative -split '[\\/]'
   if (@($parts | Where-Object { $_ -in $skip }).Count -eq 0) {
     $target = Join-Path $exampleDestination $relative
     New-Item -ItemType Directory -Force -Path (Split-Path -Parent $target) | Out-Null
