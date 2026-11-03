@@ -4,4 +4,4 @@
 
 需要Node.js 22.18以上。首次构建运行npm ci、npm test、npm run build，之后npm start访问http://127.0.0.1:3187。Windows可双击安装依赖.cmd后启动.cmd；停止.cmd停止对应进程。日常运行记录在data目录，正常运行无需在线服务。
 
-server/shared/src为原创实现，tests为14项测试，scripts为启停脚本；dist和依赖目录可重新构建。第三方组件许可见第三方许可说明.md。使用说明书和源程序PDF在同级../materials。匿名化改变标识而不增加产品功能；本示例不提供身份或权属证明，不可直接提交为本人申请。
+server/shared/src为原创实现，tests为14项测试，scripts为启停脚本；dist和依赖目录可重新构建。第三方组件许可见第三方许可说明.md。使用说明书和源程序PDF在同级../材料。

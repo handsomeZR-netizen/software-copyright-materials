@@ -26,6 +26,7 @@
 - 软件名称、版本、日期、源码行数在说明书、源程序材料和填写清单里保持一致。
 - 著作权人、权属、开发完成日期、发表情况等事实以用户提供的为准，不知道的留空待补。
 - 交付的 PDF、填写清单、协议和 `code.zip` 不出现 AI 编程工具名称，`code.zip` 不带 `CLAUDE.md`、`AGENTS.md`、`.claude/`、`.codex/` 等配置；`verify` 会扫描并报错。
+- 说明书、填写清单、网页字段、README 和代码注释都写得像人整理的：直接说软件做什么，不写防御性语言和“不是……而是”式对比，出现时 `verify` 报错；代码注释像学生把自己的项目整理过一遍，少而平实，不追求处处对齐的规整。
 - 只准备材料，不替用户提交申请、签署文件或联系第三方。
 
 ## 安装
@@ -85,11 +86,12 @@ python $kit/materials.py init    --config $cfg   # 生成说明书 TeX 骨架和
 python $kit/materials.py build   --config $cfg   # 编译两份 PDF 到 材料/，并自动执行 verify
 python $kit/materials.py verify  --config $cfg   # 单独复核
 python $kit/materials.py package --config $cfg   # 复核通过、清单无“待填”后生成 代码/code.zip
+python $kit/style_scan.py --config $cfg                  # 查找生成痕迹；--compare-ast 旧目录 新目录 确认只改了注释
 python $kit/check_web_form.py --input 材料/制作底稿/web-form.json --stats 材料/制作底稿/源码清单与统计.json
 python $kit/agreement.py --config 材料/制作底稿/agreement.json --pdf   # 合作开发协议（点名需要时）
 ```
 
-`verify` 会检查源码哈希和行号顺序、A4 尺寸、页眉页脚、目录页码与实际跳转目标、残留的模板文字，并把每页渲染成图片放进 `qa/`，供人工目视检查。机器检查通过不代表排版没有问题，联系页（多页缩略图拼在一张图上）和关键页面仍然需要人看一遍。
+`verify` 会检查源码哈希和行号顺序、A4 尺寸、页眉页脚、目录页码与实际跳转目标、残留的模板文字，以及说明书、清单和网页字段里的防御性语言与“不是……而是”式对比，并把每页渲染成图片放进 `qa/`。排版要靠人看：联系页（多页缩略图拼在一张图上）和关键页面需要目视检查一遍。
 
 目录结构：一个软著一个文件夹，多个软著并列放。
 
@@ -160,11 +162,11 @@ python .agents/skills/software-copyright-materials/scripts/materials.py build --
 ```text
 .agents/skills/software-copyright-materials/
 ├─ SKILL.md                 技能入口
-├─ references/              制作流程、登记要求、网页字段、交付布局、协议模板说明
+├─ references/              制作流程、登记要求、网页字段、交付布局、协议模板、去除生成痕迹
 ├─ assets/
 │  ├─ tex-template/         说明书与源程序 TeX 模板、等宽字体
 │  └─ agreement-template/   合作开发协议 DOCX 模板
-└─ scripts/                 materials.py、check_web_form.py、agreement.py 及测试
+└─ scripts/                 materials.py、check_web_form.py、agreement.py、style_scan.py 及测试
 examples/balance-lab/       完整匿名示例（代码 + 材料）
 scripts/
 ├─ install.ps1              安装脚本

@@ -3218,5 +3218,7 @@
       2756
     ]
   ],
+  "page_capacity_rows": 72,
+  "pages_at_overflow_risk": [],
   "note": "Long lines wrap without inflating source line counts; blank lines omitted, comments preserved."
 }

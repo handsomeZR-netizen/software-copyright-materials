@@ -11,6 +11,7 @@ All paths are relative to the configuration file, never the caller's cwd.
 from pathlib import Path
 import argparse
 import hashlib
+import importlib.util
 import json
 import math
 import re
@@ -68,7 +69,7 @@ def read_config(path):
         work, materials = base, (base / cfg.get('materials_dir', '..')).resolve()
     if materials.is_relative_to(root):
         raise ValueError('materials_dir must be outside the code folder: '+str(materials))
-    cfg['_root'], cfg['_out'], cfg['_materials'] = root, work, materials
+    cfg['_root'], cfg['_out'], cfg['_materials'], cfg['_base'] = root, work, materials, base
     cfg['_code_zip'] = (base / cfg['code_zip']).resolve() if cfg.get('code_zip') else root / 'code.zip'
     return cfg
 
@@ -332,6 +333,14 @@ def check_ai_mentions(cfg, issues):
             if found:
                 issues.append('AI tool mention in '+name+': '+', '.join(found))
 
+def check_wording(cfg, issues):
+    """Defensive wording and 不是……而是 contrasts in the manual, checklist or portal text fail verification."""
+    spec = importlib.util.spec_from_file_location('style_scan', Path(__file__).with_name('style_scan.py'))
+    scan = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(scan)
+    for label, line, message in scan.blocking_findings(cfg, CHECKLIST):
+        issues.append(f'Wording in {label}:{line}: {message}')
+
 def verify(cfg):
     import fitz
     from PIL import Image, ImageDraw
@@ -441,6 +450,7 @@ def verify(cfg):
         summaries.append({'file':name,'pages':len(doc),'source_rows':counts,'sha256':digest(materials/name)})
         doc.close()
     check_ai_mentions(cfg, issues)
+    check_wording(cfg, issues)
     outstanding = [key for key in ['development_date','publication_status','rights_confirmed'] if not cfg.get(key)]
     report = {'status':'technical_checks_passed' if not issues else 'failed', 'issues':issues, 'pdfs':summaries,
               'outstanding_human_fields':outstanding, 'visual_review':'required: inspect every contact sheet and important full-size pages',
