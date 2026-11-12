@@ -5,7 +5,7 @@ python agreement.py --config agreement.json [--pdf]
 Config keys (paths relative to the config file):
   software_name, software_version (default V1.0), development_date ("2026 年 9 月 27 日"),
   signing_date (must be earlier than development_date; empty leaves a blank to fill by hand),
-  purpose (one sentence ending with 。), parties [{name, id_number, duties}] (2-4, signing order),
+  purpose (one sentence ending with 。), parties [{name, id_number (required, 18 digits, checksum verified), duties}] (2-4, signing order),
   handler (default: first party), output (.docx, default ../合作开发协议.docx, i.e. 材料/ when the
   config sits in 材料/制作底稿/), template (optional). --pdf writes a review PDF next to the config,
   so 材料/ keeps only the Word file.
@@ -45,8 +45,12 @@ def load(path):
     for p in parties:
         if not p.get('name') or not p.get('duties'):
             raise ValueError('Each party needs name and duties')
-        if p.get('id_number') and not check_id(p['id_number']):
-            raise ValueError('ID number checksum failed: '+p['name'])
+        number = str(p.get('id_number') or '').strip()
+        if not number:
+            raise ValueError('Missing id_number for '+p['name']+': every party needs a 18-digit ID number; ask the user, never leave it blank or invent one')
+        if not check_id(number):
+            raise ValueError('ID number is not 18 digits or its checksum failed: '+p['name'])
+        p['id_number'] = number
     developed = parse_date(cfg['development_date'])
     if cfg.get('signing_date') and parse_date(cfg['signing_date']) >= developed:
         raise ValueError('signing_date must be earlier than development_date')
@@ -110,7 +114,7 @@ def build(cfg):
                 continue
             party = parties[index]
             if text[4] == '：':
-                fill(slots[0], party['name']+('（身份证号码：'+party['id_number']+'）' if party.get('id_number') else ''))
+                fill(slots[0], party['name']+'（身份证号码：'+party['id_number']+'）')
             else:
                 fill(slots[0], party['name'])
                 fill(slots[1], party['duties'].rstrip('。'))

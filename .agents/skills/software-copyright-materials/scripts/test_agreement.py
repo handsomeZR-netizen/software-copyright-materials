@@ -9,7 +9,8 @@ class AgreementTests(unittest.TestCase):
     def config(self, folder, **extra):
         cfg = {'software_name': '示例软件', 'development_date': '2026 年 9 月 27 日', 'signing_date': '2026 年 6 月 15 日',
                'purpose': '本软件用于示例数据管理。', 'output': 'out/协议.docx',
-               'parties': [{'name': '甲某', 'duties': '服务端开发'}, {'name': '乙某', 'duties': '前端开发'}]}
+               'parties': [{'name': '甲某', 'id_number': '11010519491231002X', 'duties': '服务端开发'},
+                           {'name': '乙某', 'id_number': '110101199003071233', 'duties': '前端开发'}]}
         cfg.update(extra)
         path = Path(folder)/'agreement.json'
         path.write_text(json.dumps(cfg, ensure_ascii=False), encoding='utf-8')
@@ -26,11 +27,13 @@ class AgreementTests(unittest.TestCase):
             self.assertNotIn('具体分工可由', text)
             self.assertIn('本软件著作权由甲某、乙某共同享有', text)
             self.assertIn('登记申请经办人：甲某', text)
+            self.assertIn('身份证号码：11010519491231002X', text)
             self.assertIn('一式两份', text)
             self.assertIn('协议签署日期：2026 年 6 月 15 日', text)
     def test_three_parties_keep_blank_fourth_cell(self):
         with tempfile.TemporaryDirectory() as folder:
-            parties = [{'name': n, 'duties': '开发'} for n in ['甲某', '乙某', '丙某']]
+            ids = ['11010519491231002X', '110101199003071233', '11010519491231002X']
+            parties = [{'name': n, 'id_number': i, 'duties': '开发'} for n, i in zip(['甲某', '乙某', '丙某'], ids)]
             text = self.text(build(load(self.config(folder, parties=parties))))
             self.assertIn('一式三份', text)
             self.assertNotIn('合作方四', text)
@@ -40,6 +43,15 @@ class AgreementTests(unittest.TestCase):
             for date in ['2026 年 9 月 27 日', '2026 年 10 月 1 日']:
                 with self.subTest(date=date), self.assertRaises(ValueError):
                     load(self.config(folder, signing_date=date))
+    def test_id_number_required_for_every_party(self):
+        with tempfile.TemporaryDirectory() as folder:
+            for bad in [None, '', '   ', '110105194912310021', '1101051949123100']:
+                parties = [{'name': '甲某', 'id_number': '11010519491231002X', 'duties': '服务端开发'},
+                           {'name': '乙某', 'duties': '前端开发'}]
+                if bad is not None:
+                    parties[1]['id_number'] = bad
+                with self.subTest(id_number=bad), self.assertRaises(ValueError):
+                    load(self.config(folder, parties=parties))
     def test_id_checksum(self):
         self.assertTrue(check_id('11010519491231002X'))
         self.assertFalse(check_id('110105194912310021'))
