@@ -5,7 +5,8 @@
   "fields": {
     "software_name": {
       "label": "软件全称",
-      "required": true
+      "required": true,
+      "name_suffixes": ["软件", "系统", "平台"]
     },
     "short_name": {
       "label": "软件简称",

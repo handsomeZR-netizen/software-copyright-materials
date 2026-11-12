@@ -14,6 +14,22 @@ class MaterialsTests(unittest.TestCase):
         self.assertEqual(m.deposit_selection(60),list(range(60)))
         self.assertEqual(m.deposit_selection(61),list(range(30))+list(range(31,61)))
         self.assertEqual(len(m.deposit_selection(120)),60)
+    def test_page_fill(self):
+        top,bottom=70,780
+        full=[(70+i*20,86+i*20) for i in range(35)]
+        self.assertEqual(m.page_fill_issues(full,top,bottom),[])
+        short=full[:20]
+        self.assertIn('blank at the bottom',' '.join(m.page_fill_issues(short,top,bottom)))
+        gap=full[:10]+full[25:]
+        self.assertIn('blank gap',' '.join(m.page_fill_issues(gap,top,bottom)))
+        figure=[(70,700),(705,720)]
+        self.assertIn('image-only',' '.join(m.page_fill_issues(figure,top,bottom,text_lines=1)))
+        self.assertEqual(m.page_fill_issues(figure+[(722,780)],top,bottom,text_lines=4),[])
+    def test_software_name_suffix(self):
+        for good in ['实验训练管理系统', '作品风险识别软件', '作品查重平台']:
+            self.assertIsNone(m.software_name_issue(good), good)
+        for bad in ['天平实验训练示例', '系统', '作品查重 V1.0', '']:
+            self.assertIn('软件', m.software_name_issue(bad or ''), bad)
     def test_remainder_keeps_real_rows(self):
         rows=[str(i) for i in range(2756)]
         pages=m.source_pages(rows)

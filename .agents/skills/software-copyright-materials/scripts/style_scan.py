@@ -1,7 +1,7 @@
 """Flag text that reads as machine-generated in copyright deliverables; see references/natural-writing.md.
 
-Defensive wording and “不是……而是” contrasts are blocking: materials.py verify reports them as issues.
-Everything else is advisory.
+Defensive wording, “不是……而是” contrasts and bullet (小圆点) lists are blocking in the manual, checklist
+and portal text: materials.py verify reports them as issues. In README and other package text they are advisory.
 
 python style_scan.py --config config.json             scan source files, manual TeX, checklist, web-form.json, package text
 python style_scan.py --config config.json --strict    exit 1 when anything is found
@@ -33,6 +33,10 @@ BLOCKING_PATTERNS = [
                 r'不能(解释|视为|作为|当作)|不应(被)?(视为|理解)|'
                 r'不会(丢失|乱码|出错|损坏|影响)|请注意|需要注意的是|值得注意的是|特此说明'), '防御性语言'),
 ]
+# 交付文字一律写成段落：说明书不用 itemize/\item/\textbullet，清单和网页文本不用“- ”“•”开头的小圆点列表。
+BULLET_TEX = re.compile(r'\\begin\{itemize\}|\\item\b|\\textbullet|\\bullet\b')
+BULLET_LINE = re.compile(r'^\s*([-*+]|[•●▪◦·])\s*\S')
+BULLET_GLYPH = re.compile(r'[•●▪◦]')
 STYLE_PATTERNS = [
     (re.compile(r'本(说明书|手册|文档)(面向|适用于|旨在|将)'), '封面或开头的“本说明书面向/适用于……”小字'),
     (re.compile(r'小提示[：:]|温馨提示|值得一提的是'), '提示腔标签'),
@@ -106,12 +110,32 @@ def prose_lines(text, tex=False):
         yield number, line
 
 
+def bullets_in_text(text, rel, tex=False):
+    found = []
+    fence = False
+    for number, line in prose_lines(text, tex):
+        if line.lstrip().startswith('```'):
+            fence = not fence
+            continue
+        if fence:
+            continue
+        if tex:
+            match = BULLET_TEX.search(line)
+        else:
+            match = BULLET_LINE.match(line) if not re.match(r'^\s*[-*]{3,}\s*$', line) else None
+        match = match or BULLET_GLYPH.search(line)
+        if match:
+            found.append((rel, number, '小圆点列表，改写成段落：'+match.group(0).strip()))
+    return found
+
+
 def blocking_in_text(text, rel, tex=False):
     found = []
     for number, line in prose_lines(text, tex):
         for pattern, message in BLOCKING_PATTERNS:
             for match in pattern.finditer(line):
                 found.append((rel, number, message+'：'+match.group(0)))
+    found.extend(bullets_in_text(text, rel, tex))
     return found
 
 

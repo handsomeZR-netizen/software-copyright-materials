@@ -7,7 +7,7 @@ class WebFormTests(unittest.TestCase):
     def setUp(self):
         self.schema=json.loads((Path(__file__).resolve().parents[1]/'references/web-form-schema.json').read_text(encoding='utf-8'))
         self.values={key: '实际内容' for key in self.schema['fields']}
-        self.values.update(short_name='',languages=['Python'],source_lines=100,technical_category=['教育软件'],main_functions='测'*500)
+        self.values.update(short_name='',languages=['Python'],source_lines=100,technical_category=['教育软件'],main_functions='测'*500,software_name='实验训练系统')
     def test_valid_bounds_and_blank_abbreviation(self):
         self.assertTrue(check(self.values,self.schema)['passed'])
         self.values['main_functions']='测'*1300
@@ -28,6 +28,15 @@ class WebFormTests(unittest.TestCase):
         result=check(self.values,self.schema,{'nonempty_source_lines':2756})
         self.assertFalse(result['passed'])
         self.assertIn('source_lines',result['errors'][0])
+    def test_software_name_must_end_with_software_system_or_platform(self):
+        for good in ['实验训练软件','实验训练系统','实验训练平台']:
+            data=dict(self.values);data['software_name']=good
+            self.assertTrue(check(data,self.schema)['passed'],good)
+        for bad in ['实验训练示例','系统','实验训练系统V1.0']:
+            data=dict(self.values);data['software_name']=bad
+            result=check(data,self.schema)
+            self.assertFalse(result['passed'],bad)
+            self.assertIn('software_name',result['errors'][0])
     def test_browser_unicode_length(self):
         self.assertEqual(browser_length('中文A\U0001f600'),5)
 

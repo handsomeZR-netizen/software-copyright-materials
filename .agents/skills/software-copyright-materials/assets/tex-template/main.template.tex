@@ -6,7 +6,6 @@
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{tabularx}
-\usepackage{enumitem}
 \usepackage{fancyhdr}
 \usepackage{hyperref}
 \usepackage{caption}
@@ -20,8 +19,17 @@
 \setstretch{1.35}
 \setlength{\parindent}{2em}
 \setlength{\parskip}{0.2em}
-\setlist{nosep,leftmargin=2.2em}
 \renewcommand{\arraystretch}{1.25}
+\setlength{\emergencystretch}{3em}
+% 放宽浮动限制，图片放不下时让后面的文字先流上来，页面不留空白
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.85}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}
+\newcommand{\fig}[4]{\begin{figure}[!htbp]\centering\includegraphics[width=#2\linewidth]{#1}\caption{#3}\label{#4}\end{figure}}
 
 \newcommand{\softwareName}{@@software_name@@}
 \newcommand{\softwareVersion}{@@software_version@@}
@@ -72,6 +80,8 @@
 
 % Replace every pending paragraph with facts verified against the NEW project's real code and screenshots.
 % Describe existing features and operations; keep production notes and unimplemented-feature lists out of user-facing prose.
+% Write paragraphs in a plain, slightly casual student tone; no itemize/\item bullet lists. Fill every page:
+% use \fig{file}{width}{caption}{label} (floats [!htbp]) and enough real operation text around each figure.
 \section{软件概述}
 待编写：研发目的、实际功能、使用对象和适用范围。
 \section{运行环境与安装启动}
@@ -79,9 +89,7 @@
 \section{主要界面与操作流程}
 待编写：实机截图、逐步操作、输入、反馈及结果。截图放入figures目录。
 % Example syntax (uncomment only after capturing the real screen):
-% \begin{figure}[!htbp]\centering
-% \includegraphics[width=0.95\linewidth]{figures/01-home.png}
-% \caption{实际软件主界面}\end{figure}
+% \fig{01-home}{0.95}{实际软件主界面}{fig:home}
 \section{结果查询与数据导出}
 待编写：仅描述真实实现的报告、记录、导出或查询功能。
 \section{异常处理及常见问题}

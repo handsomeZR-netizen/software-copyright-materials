@@ -34,6 +34,8 @@ DELIVERED_PDFS = ['使用说明书.pdf', '源程序鉴别材料.pdf', '使用说
 CHECKLIST = '申请信息填写清单.md'
 AGREEMENT = '合作开发协议.docx'
 BP_PER_MM = 72/25.4
+# 版权中心补正意见：申请表中的软件全称应写成 XXX软件、XXX系统 或 XXX平台。
+NAME_SUFFIXES = ('软件', '系统', '平台')
 MONO_ADVANCE_EM = 0.602  # DejaVu Sans Mono glyph advance
 GEOMETRY_DEFAULTS = {'manual': {'top': 24, 'bottom': 22, 'left': 22, 'right': 22},
                      'source': {'top': 20, 'bottom': 18, 'left': 14, 'right': 14}}
@@ -333,6 +335,37 @@ def check_ai_mentions(cfg, issues):
             if found:
                 issues.append('AI tool mention in '+name+': '+', '.join(found))
 
+def page_fill_issues(items, body_top, body_bottom, max_blank_ratio=0.12, text_lines=None):
+    """items: (y0, y1) of every text line and image inside the body. Returns problems as strings.
+
+    A manual page counts as underfilled when the blank stretch at its bottom, or between two
+    consecutive items, is taller than max_blank_ratio of the body height; a page whose body holds
+    images but fewer than 4 text lines is an image-only page."""
+    problems = []
+    height = body_bottom - body_top
+    limit = height * max_blank_ratio
+    spans = sorted((max(body_top, a), min(body_bottom, b)) for a, b in items if b > body_top and a < body_bottom)
+    if not spans:
+        return ['empty body']
+    reach = body_top
+    for a, b in spans:
+        if a - reach > limit:
+            problems.append('blank gap of %.0f mm inside the page' % ((a - reach) / BP_PER_MM))
+        reach = max(reach, b)
+    if body_bottom - reach > limit:
+        problems.append('%.0f mm left blank at the bottom' % ((body_bottom - reach) / BP_PER_MM))
+    if text_lines is not None and text_lines < 4:
+        problems.append('image-only page, put the figure next to its description')
+    return problems
+
+def software_name_issue(name):
+    """None when the name ends with 软件/系统/平台 and has a real stem; otherwise the problem text."""
+    name = (name or '').strip()
+    for suffix in NAME_SUFFIXES:
+        if name.endswith(suffix) and len(name) > len(suffix):
+            return None
+    return 'software_name "'+name+'" must end with 软件, 系统 or 平台 (copyright office correction notice); rename it everywhere, or set software_name_exempt when an already effective contract keeps the old name'
+
 def check_wording(cfg, issues):
     """Defensive wording and 不是……而是 contrasts in the manual, checklist or portal text fail verification."""
     spec = importlib.util.spec_from_file_location('style_scan', Path(__file__).with_name('style_scan.py'))
@@ -359,6 +392,12 @@ def verify(cfg):
     if actual != expected:
         issues.append('TeX source content differs from selected real source lines')
     title = cfg['software_name']
+    problem = software_name_issue(title)
+    if problem and not cfg.get('software_name_exempt'):
+        issues.append(problem)
+    checklist_path = materials / CHECKLIST
+    if checklist_path.is_file() and re.sub(r'\s+', '', title) not in re.sub(r'\s+', '', checklist_path.read_text(encoding='utf-8-sig')):
+        issues.append(CHECKLIST+' does not contain the software name '+title)
     qa = out / 'qa'
     for name, kind in [('使用说明书.pdf', 'manual'), ('源程序鉴别材料.pdf', 'source')]:
         doc = fitz.open(materials / name)
@@ -437,6 +476,16 @@ def verify(cfg):
                             for line in block['lines'] if body_top<line['bbox'][1]<body_bottom}
                     if len(rows)<30:
                         issues.append(label+' text-only non-final body page has fewer than 30 rows')
+                if index > 0 and index != len(doc)-1 and not is_contents:
+                    lines = [line['bbox'] for block in page.get_text('dict')['blocks'] if block['type']==0
+                             for line in block['lines'] if body_top<line['bbox'][1]<body_bottom]
+                    images = [info['bbox'] for info in page.get_image_info()]
+                    items = [(b[1], b[3]) for b in lines + images]
+                    for problem in page_fill_issues(items, body_top, body_bottom, float(cfg.get('max_blank_ratio', 0.12)),
+                                                    len(lines) if images else None):
+                        issues.append(label+' '+problem)
+                if any(glyph in text for glyph in '•●▪◦'):
+                    issues.append(label+' bullet list in the manual, rewrite as paragraphs')
             page.get_pixmap(matrix=fitz.Matrix(1.5,1.5), alpha=False).save(folder/f'page-{index+1:03}.png')
         for start in range(0,len(doc),12):
             sheet = Image.new('RGB',(1200,1820),'#dde2e5')

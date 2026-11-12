@@ -8,6 +8,10 @@ SCHEMA = Path(__file__).resolve().parents[1] / 'references/web-form-schema.json'
 def browser_length(value):
     return len(value.encode('utf-16-le')) // 2
 
+def name_issue(name, suffixes):
+    name = (name or '').strip()
+    return not any(name.endswith(s) and len(name) > len(s) for s in suffixes)
+
 def check(values, schema, stats=None):
     errors, counts = [], {}
     if stats is not None and values.get('source_lines') != stats.get('nonempty_source_lines'):
@@ -35,6 +39,8 @@ def check(values, schema, stats=None):
         counts[key] = count
         if count < rule.get('min', 0) or count > rule.get('max', float('inf')):
             errors.append(key + ': length ' + str(count) + ' outside observed limits')
+        if key == 'software_name' and rule.get('name_suffixes') and name_issue(value, rule['name_suffixes']):
+            errors.append(key + ': must end with ' + '/'.join(rule['name_suffixes']) + ' (copyright office correction notice)')
         if key == 'short_name' and value.strip() in {'无', '没有', '暂无'}:
             errors.append(key + ': leave empty when no actual abbreviation exists')
     return {'passed': not errors, 'errors': errors, 'lengths': counts,

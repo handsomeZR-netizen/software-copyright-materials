@@ -27,6 +27,15 @@ class StyleScanTests(unittest.TestCase):
         for expected in ['coding', '横幅', '逐行标号', '质朴', '文件头', '韩文']:
             self.assertIn(expected, messages)
 
+    def test_bullet_lists_block(self):
+        tex = '正文一段。\n\\begin{itemize}\n  \\item 作品管理\n\\end{itemize}\n% \\item 注释里的不算\n'
+        found = s.blocking_in_text(tex, 'main.tex', tex=True)
+        self.assertEqual([line for _, line, _ in found], [2, 3])
+        md = '## 需要本人确认\n\n- 开发完成日期：待填。\n• 发表状态\n| 字段 | 值 |\n| --- | --- |\n```text\n- 代码块里的不算\n```\n'
+        found = s.blocking_in_text(md, 'a.md')
+        self.assertEqual([line for _, line, _ in found], [3, 4])
+        self.assertEqual(s.blocking_in_text('开发完成日期是2026年11月3日，发表状态按未发表填写。', 'b.md'), [])
+
     def test_aligned_trailing_comments(self):
         code = ''.join(f'COLOR_{i} = "#00000{i}"   # 颜色{i}\n' for i in range(6))
         self.assertIn('对齐成一列', ' '.join(self.scan('c.py', code, prose=False)))

@@ -79,6 +79,8 @@ def build(cfg):
     template = cfg['_base'] / cfg['template'] if cfg.get('template') else TEMPLATE
     d = docx.Document(template)
     name, version, parties = cfg['software_name'], cfg['software_version'], cfg['parties']
+    if not name.endswith(('软件', '系统', '平台')):
+        print('Notice: the application form needs a name ending in 软件/系统/平台; keep this name only if the agreement is already effective with it.')
     signing = cfg.get('signing_date') or BLANK_DATE
     n = len(parties)
     for para in list(d.paragraphs):
